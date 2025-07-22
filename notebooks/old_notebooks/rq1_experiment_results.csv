@@ -1,0 +1,51 @@
+id,question,true_answer,pre_train,epoch_1,epoch_2,epoch_3
+idx_0,Landolt C and snellen e acuity: differences in strabismus amblyopia?,no,yes,yes,yes,yes
+idx_1,Are the long-term results of the transanal pull-through equal to those of the transabdominal pull-through?,no,yes,yes,yes,yes
+idx_2,30-Day and 1-year mortality in emergency general surgery laparotomies: an area of concern and need for improvement?,maybe,yes,yes,yes,yes
+idx_3,Is adjustment for reporting heterogeneity necessary in sleep disorders?,no,yes,yes,yes,yes
+idx_4,Do mutations causing low HDL-C promote increased carotid intima-media thickness?,no,yes,yes,yes,yes
+idx_5,Therapeutic anticoagulation in the trauma patient: is it safe?,no,yes,yes,yes,yes
+idx_6,Prompting Primary Care Providers about Increased Patient Risk As a Result of Family History: Does It Work?,no,yes,yes,yes,yes
+idx_7,Amblyopia: is visual loss permanent?,no,yes,yes,yes,yes
+idx_8,Does HER2 immunoreactivity provide prognostic information in locally advanced urothelial carcinoma patients receiving adjuvant M-VEC chemotherapy?,maybe,yes,yes,yes,yes
+idx_9,Necrotizing fasciitis: an indication for hyperbaric oxygenation therapy?,no,yes,yes,yes,yes
+idx_10,Is the Hawkins sign able to predict necrosis in fractures of the neck of the astragalus?,maybe,yes,yes,yes,yes
+idx_11,Is a mandatory general surgery rotation necessary in the surgical clerkship?,no,yes,yes,yes,yes
+idx_12,Do general practice characteristics influence uptake of an information technology (IT) innovation in primary care?,no,yes,yes,yes,yes
+idx_13,Prognosis of well differentiated small hepatocellular carcinoma--is well differentiated hepatocellular carcinoma clinically early cancer?,no,yes,yes,yes,yes
+idx_14,Do follow-up recommendations for abnormal Papanicolaou smears influence patient adherence?,no,yes,yes,yes,yes
+idx_15,Does diabetes mellitus influence the efficacy of FDG-PET in the diagnosis of cervical cancer?,no,yes,yes,yes,yes
+idx_16,Can a practicing surgeon detect early lymphedema reliably?,maybe,yes,yes,yes,yes
+idx_17,Colorectal cancer with synchronous liver metastases: does global management at the same centre improve results?,no,yes,yes,yes,yes
+idx_18,Assessment of carotid artery stenosis before coronary artery bypass surgery. Is it always necessary?,no,yes,yes,yes,yes
+idx_19,Should direct mesocolon invasion be included in T4 for the staging of gastric cancer?,maybe,yes,yes,yes,yes
+idx_20,Do Surrogates of Injury Severity Influence the Occurrence of Heterotopic Ossification in Fractures of the Acetabulum?,maybe,yes,yes,yes,yes
+idx_21,Does pretreatment with statins improve clinical outcome after stroke?,no,yes,yes,yes,yes
+idx_22,Sternal fracture in growing children : A rare and often overlooked fracture?,maybe,yes,yes,yes,yes
+idx_23,Does immediate breast reconstruction compromise the delivery of adjuvant chemotherapy?,no,yes,yes,yes,yes
+idx_24,Human papillomavirus and pterygium. Is the virus a risk factor?,maybe,yes,yes,yes,yes
+idx_25,Can PRISM predict length of PICU stay?,no,yes,yes,yes,yes
+idx_26,Major depression and alcohol use disorder in adolescence: Does comorbidity lead to poorer outcomes of depression?,no,yes,yes,yes,yes
+idx_27,Can we measure mesopic pupil size with the cobalt blue light slit-lamp biomicroscopy method?,no,yes,yes,yes,yes
+idx_28,Should circumcision be performed in childhood?,no,yes,yes,yes,yes
+idx_29,Does a colonoscopy after acute diverticulitis affect its management?,no,yes,yes,yes,yes
+idx_30,Does the Simultaneous Use of a Neuroendoscope Influence the Incidence of Ventriculoperitoneal Shunt Infection?,no,yes,yes,yes,yes
+idx_31,Is a specialised training of phonological awareness indicated in every preschool child?,maybe,yes,yes,yes,yes
+idx_32,Is tumour expression of VEGF associated with venous invasion and survival in pT3 renal cell carcinoma?,maybe,yes,yes,yes,yes
+idx_33,Continuation of pregnancy after antenatal corticosteroid administration: opportunity for rescue?,maybe,yes,yes,yes,yes
+idx_34,Treatment of contralateral hydrocele in neonatal testicular torsion: Is less more?,maybe,yes,yes,yes,yes
+idx_35,"Are normally sighted, visually impaired, and blind pedestrians accurate and reliable at making street crossing decisions?",maybe,yes,yes,yes,yes
+idx_36,Is it Crohn's disease?,maybe,yes,yes,yes,yes
+idx_37,Detailed analysis of sputum and systemic inflammation in asthma phenotypes: are paucigranulocytic asthmatics really non-inflammatory?,maybe,yes,yes,yes,yes
+idx_38,Is Panton-Valentine leucocidin associated with the pathogenesis of Staphylococcus aureus bacteraemia in the UK?,maybe,yes,yes,yes,yes
+idx_39,Can you deliver accurate tidal volume by manual resuscitator?,no,yes,yes,yes,yes
+idx_40,Can increases in the cigarette tax rate be linked to cigarette retail prices?,no,yes,yes,yes,yes
+idx_41,Does the radiographic transition zone correlate with the level of aganglionosis on the specimen in Hirschsprung's disease?,no,yes,yes,yes,yes
+idx_42,Cycloplegic autorefraction in young adults: is it mandatory?,maybe,yes,yes,yes,yes
+idx_43,"""Would a man smell a rose then throw it away?",maybe,yes,yes,yes,yes
+idx_44,Department of Transportation vs self-reported data on motor vehicle collisions and driving convictions for stroke survivors: do they agree?,no,yes,yes,yes,yes
+idx_45,Does self-efficacy mediate the relationship between transformational leadership behaviours and healthcare workers' sleep quality?,maybe,yes,yes,yes,yes
+idx_46,Does microbial contamination influence the success of the hematopoietic cell transplantation outcomes?,maybe,yes,yes,yes,yes
+idx_47,Very high serum CA 19-9 levels: a contraindication to pancreaticoduodenectomy?,no,yes,yes,yes,yes
+idx_48,Perioperative care in an animal model for training in abdominal surgery: is it necessary a preoperative fasting?,no,yes,yes,yes,yes
+idx_49,Are physicians aware of the side effects of angiotensin-converting enzyme inhibitors?,no,yes,yes,yes,yes

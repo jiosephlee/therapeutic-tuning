@@ -1,0 +1,1 @@
+nohup python fine_tuning_on_TDC.py --dataset AMES --metric auroc --model Qwen/Qwen2.5-0.5B > output_3.log 2>&1 & disown

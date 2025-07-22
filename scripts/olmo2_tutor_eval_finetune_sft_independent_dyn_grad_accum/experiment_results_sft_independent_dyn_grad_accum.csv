@@ -1,0 +1,511 @@
+chapter,epoch,accuracy_before_ft_this_epoch,accuracy_after_ft_this_epoch
+Chapter1_$\def\d{\displaystyle}$ $\newc...,1,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,2,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,3,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,4,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,5,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,6,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,7,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,8,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,9,0.3333333333333333,0.3333333333333333
+Chapter1_$\def\d{\displaystyle}$ $\newc...,10,0.3333333333333333,0.3333333333333333
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,1,0.3,0.3
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,2,0.3,0.3
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,3,0.3,0.4
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,4,0.4,0.3
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,5,0.3,0.5
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,6,0.5,0.2
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,7,0.2,0.4
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,8,0.4,0.4
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,9,0.4,0.3
+Chapter2_$\newcommand{\P}{\mathbb{P}}$...,10,0.3,0.5
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,1,0.0,0.0
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,2,0.0,0.3333333333333333
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,3,0.3333333333333333,0.6666666666666666
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,4,0.6666666666666666,0.3333333333333333
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,5,0.3333333333333333,0.3333333333333333
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,6,0.3333333333333333,0.3333333333333333
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,7,0.3333333333333333,0.6666666666666666
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,8,0.6666666666666666,0.3333333333333333
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,9,0.3333333333333333,0.3333333333333333
+Chapter3_$\newcommand{\P}{\mathbb{P}}$...,10,0.3333333333333333,0.6666666666666666
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,1,0.625,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,2,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,3,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,4,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,5,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,6,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,7,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,8,0.5,0.5
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,9,0.5,0.375
+Chapter4_$\renewcommand{\P}{\mathbb{P}}...,10,0.375,0.5
+Chapter5_(i) Energy conservation is arg...,1,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,2,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,3,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,4,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,5,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,6,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,7,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,8,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,9,1.0,1.0
+Chapter5_(i) Energy conservation is arg...,10,1.0,1.0
+Chapter6_12.1 Anaerobic Digestion  Anae...,1,0.6666666666666666,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,2,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,3,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,4,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,5,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,6,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,7,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,8,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,9,0.3333333333333333,0.3333333333333333
+Chapter6_12.1 Anaerobic Digestion  Anae...,10,0.3333333333333333,0.3333333333333333
+Chapter7_4.1 Natural Mechano-sensory Sy...,1,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,2,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,3,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,4,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,5,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,6,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,7,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,8,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,9,0.75,0.75
+Chapter7_4.1 Natural Mechano-sensory Sy...,10,0.75,0.75
+Chapter8_A BinarySearchTree is a specia...,1,0.125,0.375
+Chapter8_A BinarySearchTree is a specia...,2,0.375,0.375
+Chapter8_A BinarySearchTree is a specia...,3,0.375,0.25
+Chapter8_A BinarySearchTree is a specia...,4,0.25,0.375
+Chapter8_A BinarySearchTree is a specia...,5,0.375,0.125
+Chapter8_A BinarySearchTree is a specia...,6,0.125,0.25
+Chapter8_A BinarySearchTree is a specia...,7,0.25,0.25
+Chapter8_A BinarySearchTree is a specia...,8,0.25,0.125
+Chapter8_A BinarySearchTree is a specia...,9,0.125,0.375
+Chapter8_A BinarySearchTree is a specia...,10,0.375,0.25
+Chapter9_A discrete probability distrib...,1,0.5,0.5
+Chapter9_A discrete probability distrib...,2,0.5,0.5
+Chapter9_A discrete probability distrib...,3,0.5,0.25
+Chapter9_A discrete probability distrib...,4,0.25,0.5
+Chapter9_A discrete probability distrib...,5,0.5,0.5
+Chapter9_A discrete probability distrib...,6,0.5,0.25
+Chapter9_A discrete probability distrib...,7,0.25,0.25
+Chapter9_A discrete probability distrib...,8,0.25,0.25
+Chapter9_A discrete probability distrib...,9,0.25,0.25
+Chapter9_A discrete probability distrib...,10,0.25,0.25
+Chapter10_A generator is a device that t...,1,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,2,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,3,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,4,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,5,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,6,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,7,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,8,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,9,0.6666666666666666,0.6666666666666666
+Chapter10_A generator is a device that t...,10,0.6666666666666666,0.6666666666666666
+Chapter11_A graph is a structure consist...,1,0.6,0.8
+Chapter11_A graph is a structure consist...,2,0.8,0.6
+Chapter11_A graph is a structure consist...,3,0.6,0.8
+Chapter11_A graph is a structure consist...,4,0.8,0.8
+Chapter11_A graph is a structure consist...,5,0.8,0.8
+Chapter11_A graph is a structure consist...,6,0.8,0.8
+Chapter11_A graph is a structure consist...,7,0.8,0.8
+Chapter11_A graph is a structure consist...,8,0.8,0.8
+Chapter11_A graph is a structure consist...,9,0.8,0.8
+Chapter11_A graph is a structure consist...,10,0.8,0.8
+Chapter12_A more valuable probability de...,1,0.6,0.8
+Chapter12_A more valuable probability de...,2,0.8,0.8
+Chapter12_A more valuable probability de...,3,0.8,0.8
+Chapter12_A more valuable probability de...,4,0.8,0.8
+Chapter12_A more valuable probability de...,5,0.8,0.8
+Chapter12_A more valuable probability de...,6,0.8,0.8
+Chapter12_A more valuable probability de...,7,0.8,0.8
+Chapter12_A more valuable probability de...,8,0.8,0.8
+Chapter12_A more valuable probability de...,9,0.8,0.8
+Chapter12_A more valuable probability de...,10,0.8,0.8
+Chapter13_A second form of the `if` stat...,1,1.0,1.0
+Chapter13_A second form of the `if` stat...,2,1.0,1.0
+Chapter13_A second form of the `if` stat...,3,1.0,1.0
+Chapter13_A second form of the `if` stat...,4,1.0,1.0
+Chapter13_A second form of the `if` stat...,5,1.0,1.0
+Chapter13_A second form of the `if` stat...,6,1.0,1.0
+Chapter13_A second form of the `if` stat...,7,1.0,1.0
+Chapter13_A second form of the `if` stat...,8,1.0,1.0
+Chapter13_A second form of the `if` stat...,9,1.0,1.0
+Chapter13_A second form of the `if` stat...,10,1.0,1.0
+Chapter14_A second important kind of Mar...,1,1.0,1.0
+Chapter14_A second important kind of Mar...,2,1.0,1.0
+Chapter14_A second important kind of Mar...,3,1.0,1.0
+Chapter14_A second important kind of Mar...,4,1.0,1.0
+Chapter14_A second important kind of Mar...,5,1.0,1.0
+Chapter14_A second important kind of Mar...,6,1.0,1.0
+Chapter14_A second important kind of Mar...,7,1.0,1.0
+Chapter14_A second important kind of Mar...,8,1.0,0.8333333333333334
+Chapter14_A second important kind of Mar...,9,0.8333333333333334,0.8333333333333334
+Chapter14_A second important kind of Mar...,10,0.8333333333333334,0.8333333333333334
+Chapter15_A tuple is a sequence of value...,1,1.0,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,2,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,3,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,4,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,5,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,6,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,7,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,8,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,9,0.6666666666666666,0.6666666666666666
+Chapter15_A tuple is a sequence of value...,10,0.6666666666666666,0.6666666666666666
+Chapter16_Acceleration  After the air re...,1,0.75,0.75
+Chapter16_Acceleration  After the air re...,2,0.75,0.75
+Chapter16_Acceleration  After the air re...,3,0.75,0.75
+Chapter16_Acceleration  After the air re...,4,0.75,0.75
+Chapter16_Acceleration  After the air re...,5,0.75,0.75
+Chapter16_Acceleration  After the air re...,6,0.75,0.75
+Chapter16_Acceleration  After the air re...,7,0.75,0.75
+Chapter16_Acceleration  After the air re...,8,0.75,0.75
+Chapter16_Acceleration  After the air re...,9,0.75,0.75
+Chapter16_Acceleration  After the air re...,10,0.75,0.75
+Chapter17_An optical device such as the...,1,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,2,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,3,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,4,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,5,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,6,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,7,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,8,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,9,0.6666666666666666,0.6666666666666666
+Chapter17_An optical device such as the...,10,0.6666666666666666,0.6666666666666666
+Chapter18_Angles are classified accordin...,1,0.5,0.5
+Chapter18_Angles are classified accordin...,2,0.5,0.5
+Chapter18_Angles are classified accordin...,3,0.5,0.5
+Chapter18_Angles are classified accordin...,4,0.5,0.5
+Chapter18_Angles are classified accordin...,5,0.5,0.5
+Chapter18_Angles are classified accordin...,6,0.5,0.5
+Chapter18_Angles are classified accordin...,7,0.5,0.5
+Chapter18_Angles are classified accordin...,8,0.5,0.5
+Chapter18_Angles are classified accordin...,9,0.5,0.5
+Chapter18_Angles are classified accordin...,10,0.5,0.5
+Chapter19_Array Index Operator  Example:...,1,0.6,0.4
+Chapter19_Array Index Operator  Example:...,2,0.4,0.6
+Chapter19_Array Index Operator  Example:...,3,0.6,0.4
+Chapter19_Array Index Operator  Example:...,4,0.4,0.4
+Chapter19_Array Index Operator  Example:...,5,0.4,0.4
+Chapter19_Array Index Operator  Example:...,6,0.4,0.4
+Chapter19_Array Index Operator  Example:...,7,0.4,0.4
+Chapter19_Array Index Operator  Example:...,8,0.4,0.6
+Chapter19_Array Index Operator  Example:...,9,0.6,0.4
+Chapter19_Array Index Operator  Example:...,10,0.4,0.6
+"Chapter20_As you may have discovered, it...",1,1.0,1.0
+"Chapter20_As you may have discovered, it...",2,1.0,1.0
+"Chapter20_As you may have discovered, it...",3,1.0,1.0
+"Chapter20_As you may have discovered, it...",4,1.0,1.0
+"Chapter20_As you may have discovered, it...",5,1.0,1.0
+"Chapter20_As you may have discovered, it...",6,1.0,1.0
+"Chapter20_As you may have discovered, it...",7,1.0,1.0
+"Chapter20_As you may have discovered, it...",8,1.0,1.0
+"Chapter20_As you may have discovered, it...",9,1.0,1.0
+"Chapter20_As you may have discovered, it...",10,1.0,1.0
+Chapter21_Author: Adrienne Watt  End Use...,1,0.8,0.8
+Chapter21_Author: Adrienne Watt  End Use...,2,0.8,0.8
+Chapter21_Author: Adrienne Watt  End Use...,3,0.8,0.6
+Chapter21_Author: Adrienne Watt  End Use...,4,0.6,0.8
+Chapter21_Author: Adrienne Watt  End Use...,5,0.8,0.8
+Chapter21_Author: Adrienne Watt  End Use...,6,0.8,0.8
+Chapter21_Author: Adrienne Watt  End Use...,7,0.8,0.8
+Chapter21_Author: Adrienne Watt  End Use...,8,0.8,0.6
+Chapter21_Author: Adrienne Watt  End Use...,9,0.6,0.6
+Chapter21_Author: Adrienne Watt  End Use...,10,0.6,0.6
+Chapter22_Author: Adrienne Watt  The way...,1,0.6,0.6
+Chapter22_Author: Adrienne Watt  The way...,2,0.6,0.6
+Chapter22_Author: Adrienne Watt  The way...,3,0.6,0.6
+Chapter22_Author: Adrienne Watt  The way...,4,0.6,0.8
+Chapter22_Author: Adrienne Watt  The way...,5,0.8,0.6
+Chapter22_Author: Adrienne Watt  The way...,6,0.6,0.8
+Chapter22_Author: Adrienne Watt  The way...,7,0.8,0.6
+Chapter22_Author: Adrienne Watt  The way...,8,0.6,0.8
+Chapter22_Author: Adrienne Watt  The way...,9,0.8,0.8
+Chapter22_Author: Adrienne Watt  The way...,10,0.8,0.8
+Chapter23_Before describing the converge...,1,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,2,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,3,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,4,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,5,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,6,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,7,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,8,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,9,0.6666666666666666,0.6666666666666666
+Chapter23_Before describing the converge...,10,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",1,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",2,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",3,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",4,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",5,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",6,0.6666666666666666,0.3333333333333333
+"Chapter24_By the end of this section, yo...",7,0.3333333333333333,0.6666666666666666
+"Chapter24_By the end of this section, yo...",8,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",9,0.6666666666666666,0.6666666666666666
+"Chapter24_By the end of this section, yo...",10,0.6666666666666666,0.3333333333333333
+"Chapter25_By way of example, let us use...",1,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",2,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",3,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",4,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",5,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",6,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",7,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",8,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",9,0.6666666666666666,0.6666666666666666
+"Chapter25_By way of example, let us use...",10,0.6666666666666666,0.6666666666666666
+Chapter26_Cauchy sequences and completen...,1,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,2,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,3,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,4,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,5,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,6,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,7,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,8,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,9,0.3333333333333333,0.3333333333333333
+Chapter26_Cauchy sequences and completen...,10,0.3333333333333333,0.3333333333333333
+Chapter27_Causes of Climate Change  Eart...,1,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,2,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,3,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,4,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,5,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,6,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,7,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,8,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,9,0.75,0.75
+Chapter27_Causes of Climate Change  Eart...,10,0.75,0.75
+Chapter28_Code examples from this chapte...,1,0.6666666666666666,0.6666666666666666
+Chapter28_Code examples from this chapte...,2,0.6666666666666666,0.6666666666666666
+Chapter28_Code examples from this chapte...,3,0.6666666666666666,0.3333333333333333
+Chapter28_Code examples from this chapte...,4,0.3333333333333333,0.6666666666666666
+Chapter28_Code examples from this chapte...,5,0.6666666666666666,0.6666666666666666
+Chapter28_Code examples from this chapte...,6,0.6666666666666666,0.3333333333333333
+Chapter28_Code examples from this chapte...,7,0.3333333333333333,0.6666666666666666
+Chapter28_Code examples from this chapte...,8,0.6666666666666666,0.6666666666666666
+Chapter28_Code examples from this chapte...,9,0.6666666666666666,0.6666666666666666
+Chapter28_Code examples from this chapte...,10,0.6666666666666666,0.6666666666666666
+Chapter29_Coherent states are special st...,1,0.6666666666666666,0.3333333333333333
+Chapter29_Coherent states are special st...,2,0.3333333333333333,1.0
+Chapter29_Coherent states are special st...,3,1.0,0.3333333333333333
+Chapter29_Coherent states are special st...,4,0.3333333333333333,0.6666666666666666
+Chapter29_Coherent states are special st...,5,0.6666666666666666,0.6666666666666666
+Chapter29_Coherent states are special st...,6,0.6666666666666666,1.0
+Chapter29_Coherent states are special st...,7,1.0,1.0
+Chapter29_Coherent states are special st...,8,1.0,0.6666666666666666
+Chapter29_Coherent states are special st...,9,0.6666666666666666,0.6666666666666666
+Chapter29_Coherent states are special st...,10,0.6666666666666666,1.0
+Chapter30_Complex Numbers  A complex num...,1,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,2,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,3,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,4,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,5,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,6,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,7,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,8,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,9,0.2,0.2
+Chapter30_Complex Numbers  A complex num...,10,0.2,0.2
+Chapter31_Composite trials and component...,1,0.6,0.6
+Chapter31_Composite trials and component...,2,0.6,0.6
+Chapter31_Composite trials and component...,3,0.6,0.6
+Chapter31_Composite trials and component...,4,0.6,0.6
+Chapter31_Composite trials and component...,5,0.6,0.4
+Chapter31_Composite trials and component...,6,0.4,0.6
+Chapter31_Composite trials and component...,7,0.6,0.6
+Chapter31_Composite trials and component...,8,0.6,0.4
+Chapter31_Composite trials and component...,9,0.4,0.4
+Chapter31_Composite trials and component...,10,0.4,0.6
+Chapter32_Compound Interest  View tutori...,1,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,2,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,3,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,4,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,5,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,6,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,7,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,8,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,9,0.6666666666666666,0.6666666666666666
+Chapter32_Compound Interest  View tutori...,10,0.6666666666666666,0.6666666666666666
+Chapter33_Computers can store and proces...,1,0.6,0.6
+Chapter33_Computers can store and proces...,2,0.6,0.6
+Chapter33_Computers can store and proces...,3,0.6,0.6
+Chapter33_Computers can store and proces...,4,0.6,0.6
+Chapter33_Computers can store and proces...,5,0.6,0.6
+Chapter33_Computers can store and proces...,6,0.6,0.6
+Chapter33_Computers can store and proces...,7,0.6,0.6
+Chapter33_Computers can store and proces...,8,0.6,0.6
+Chapter33_Computers can store and proces...,9,0.6,0.6
+Chapter33_Computers can store and proces...,10,0.6,0.6
+"Chapter34_Confounding factors are evil,...",1,1.0,1.0
+"Chapter34_Confounding factors are evil,...",2,1.0,1.0
+"Chapter34_Confounding factors are evil,...",3,1.0,1.0
+"Chapter34_Confounding factors are evil,...",4,1.0,1.0
+"Chapter34_Confounding factors are evil,...",5,1.0,1.0
+"Chapter34_Confounding factors are evil,...",6,1.0,1.0
+"Chapter34_Confounding factors are evil,...",7,1.0,1.0
+"Chapter34_Confounding factors are evil,...",8,1.0,1.0
+"Chapter34_Confounding factors are evil,...",9,1.0,1.0
+"Chapter34_Confounding factors are evil,...",10,1.0,1.0
+Chapter35_Consider a body moving in the...,1,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,2,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,3,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,4,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,5,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,6,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,7,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,8,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,9,0.3333333333333333,0.3333333333333333
+Chapter35_Consider a body moving in the...,10,0.3333333333333333,0.3333333333333333
+Chapter36_Consider the expression  $(1-2...,1,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,2,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,3,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,4,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,5,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,6,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,7,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,8,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,9,0.6,0.6
+Chapter36_Consider the expression  $(1-2...,10,0.6,0.6
+Chapter37_Consider the function defined...,1,0.6,0.6
+Chapter37_Consider the function defined...,2,0.6,0.6
+Chapter37_Consider the function defined...,3,0.6,0.6
+Chapter37_Consider the function defined...,4,0.6,0.6
+Chapter37_Consider the function defined...,5,0.6,0.6
+Chapter37_Consider the function defined...,6,0.6,0.6
+Chapter37_Consider the function defined...,7,0.6,0.6
+Chapter37_Consider the function defined...,8,0.6,0.6
+Chapter37_Consider the function defined...,9,0.6,0.6
+Chapter37_Consider the function defined...,10,0.6,0.6
+Chapter38_Cosmology is the scientific st...,1,0.0,0.0
+Chapter38_Cosmology is the scientific st...,2,0.0,0.0
+Chapter38_Cosmology is the scientific st...,3,0.0,0.0
+Chapter38_Cosmology is the scientific st...,4,0.0,0.0
+Chapter38_Cosmology is the scientific st...,5,0.0,0.0
+Chapter38_Cosmology is the scientific st...,6,0.0,0.0
+Chapter38_Cosmology is the scientific st...,7,0.0,0.0
+Chapter38_Cosmology is the scientific st...,8,0.0,0.0
+Chapter38_Cosmology is the scientific st...,9,0.0,0.0
+Chapter38_Cosmology is the scientific st...,10,0.0,0.0
+Chapter39_Cryptography is the study of s...,1,0.4,0.4
+Chapter39_Cryptography is the study of s...,2,0.4,0.6
+Chapter39_Cryptography is the study of s...,3,0.6,0.4
+Chapter39_Cryptography is the study of s...,4,0.4,0.4
+Chapter39_Cryptography is the study of s...,5,0.4,0.4
+Chapter39_Cryptography is the study of s...,6,0.4,0.4
+Chapter39_Cryptography is the study of s...,7,0.4,0.4
+Chapter39_Cryptography is the study of s...,8,0.4,0.4
+Chapter39_Cryptography is the study of s...,9,0.4,0.4
+Chapter39_Cryptography is the study of s...,10,0.4,0.4
+Chapter40_Diagram 3.14: A cell with an e...,1,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,2,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,3,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,4,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,5,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,6,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,7,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,8,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,9,0.75,0.75
+Chapter40_Diagram 3.14: A cell with an e...,10,0.75,0.75
+Chapter41_Early motivation for the devel...,1,0.5,0.5
+Chapter41_Early motivation for the devel...,2,0.5,0.5
+Chapter41_Early motivation for the devel...,3,0.5,0.5
+Chapter41_Early motivation for the devel...,4,0.5,0.5
+Chapter41_Early motivation for the devel...,5,0.5,0.5
+Chapter41_Early motivation for the devel...,6,0.5,0.75
+Chapter41_Early motivation for the devel...,7,0.75,0.5
+Chapter41_Early motivation for the devel...,8,0.5,0.25
+Chapter41_Early motivation for the devel...,9,0.25,0.25
+Chapter41_Early motivation for the devel...,10,0.25,0.5
+Chapter42_Exercise $1$  (See Exercise 3...,1,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,2,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,3,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,4,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,5,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,6,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,7,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,8,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,9,0.75,0.75
+Chapter42_Exercise $1$  (See Exercise 3...,10,0.75,0.75
+Chapter43_Exercise $1$  (See Exercises 3...,1,0.6666666666666666,0.6666666666666666
+Chapter43_Exercise $1$  (See Exercises 3...,2,0.6666666666666666,1.0
+Chapter43_Exercise $1$  (See Exercises 3...,3,1.0,0.6666666666666666
+Chapter43_Exercise $1$  (See Exercises 3...,4,0.6666666666666666,1.0
+Chapter43_Exercise $1$  (See Exercises 3...,5,1.0,0.6666666666666666
+Chapter43_Exercise $1$  (See Exercises 3...,6,0.6666666666666666,1.0
+Chapter43_Exercise $1$  (See Exercises 3...,7,1.0,0.6666666666666666
+Chapter43_Exercise $1$  (See Exercises 3...,8,0.6666666666666666,1.0
+Chapter43_Exercise $1$  (See Exercises 3...,9,1.0,1.0
+Chapter43_Exercise $1$  (See Exercises 3...,10,1.0,1.0
+Chapter44_Exercise $87$  How is the numb...,1,0.5,0.5
+Chapter44_Exercise $87$  How is the numb...,2,0.5,0.5
+Chapter44_Exercise $87$  How is the numb...,3,0.5,0.25
+Chapter44_Exercise $87$  How is the numb...,4,0.25,0.25
+Chapter44_Exercise $87$  How is the numb...,5,0.25,0.5
+Chapter44_Exercise $87$  How is the numb...,6,0.5,0.5
+Chapter44_Exercise $87$  How is the numb...,7,0.5,0.5
+Chapter44_Exercise $87$  How is the numb...,8,0.5,0.75
+Chapter44_Exercise $87$  How is the numb...,9,0.75,0.75
+Chapter44_Exercise $87$  How is the numb...,10,0.75,0.75
+Chapter45_For the exercises in this chap...,1,1.0,1.0
+Chapter45_For the exercises in this chap...,2,1.0,1.0
+Chapter45_For the exercises in this chap...,3,1.0,1.0
+Chapter45_For the exercises in this chap...,4,1.0,1.0
+Chapter45_For the exercises in this chap...,5,1.0,1.0
+Chapter45_For the exercises in this chap...,6,1.0,1.0
+Chapter45_For the exercises in this chap...,7,1.0,1.0
+Chapter45_For the exercises in this chap...,8,1.0,1.0
+Chapter45_For the exercises in this chap...,9,1.0,1.0
+Chapter45_For the exercises in this chap...,10,1.0,1.0
+Chapter46_Fossil Fuel Elements  Fossil f...,1,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,2,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,3,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,4,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,5,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,6,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,7,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,8,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,9,0.6666666666666666,0.6666666666666666
+Chapter46_Fossil Fuel Elements  Fossil f...,10,0.6666666666666666,0.6666666666666666
+Chapter47_Fourier’s theorem (see Section...,1,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,2,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,3,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,4,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,5,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,6,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,7,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,8,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,9,1.0,1.0
+Chapter47_Fourier’s theorem (see Section...,10,1.0,1.0
+Chapter48_Geometric sequences have a com...,1,1.0,1.0
+Chapter48_Geometric sequences have a com...,2,1.0,1.0
+Chapter48_Geometric sequences have a com...,3,1.0,1.0
+Chapter48_Geometric sequences have a com...,4,1.0,1.0
+Chapter48_Geometric sequences have a com...,5,1.0,1.0
+Chapter48_Geometric sequences have a com...,6,1.0,1.0
+Chapter48_Geometric sequences have a com...,7,1.0,1.0
+Chapter48_Geometric sequences have a com...,8,1.0,1.0
+Chapter48_Geometric sequences have a com...,9,1.0,1.0
+Chapter48_Geometric sequences have a com...,10,1.0,1.0
+Chapter49_Given a vector $v$ and some ot...,1,0.625,0.625
+Chapter49_Given a vector $v$ and some ot...,2,0.625,0.75
+Chapter49_Given a vector $v$ and some ot...,3,0.75,0.75
+Chapter49_Given a vector $v$ and some ot...,4,0.75,0.625
+Chapter49_Given a vector $v$ and some ot...,5,0.625,0.625
+Chapter49_Given a vector $v$ and some ot...,6,0.625,0.625
+Chapter49_Given a vector $v$ and some ot...,7,0.625,0.75
+Chapter49_Given a vector $v$ and some ot...,8,0.75,0.75
+Chapter49_Given a vector $v$ and some ot...,9,0.75,0.75
+Chapter49_Given a vector $v$ and some ot...,10,0.75,0.75
+Chapter50_Hash tables are an efficient m...,1,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,2,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,3,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,4,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,5,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,6,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,7,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,8,0.6666666666666666,0.6666666666666666
+Chapter50_Hash tables are an efficient m...,9,0.6666666666666666,0.3333333333333333
+Chapter50_Hash tables are an efficient m...,10,0.3333333333333333,0.6666666666666666
+Chapter51_INTRODUCTION  You will note th...,1,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,2,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,3,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,4,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,5,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,6,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,7,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,8,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,9,0.75,0.75
+Chapter51_INTRODUCTION  You will note th...,10,0.75,0.75

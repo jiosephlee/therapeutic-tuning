@@ -1,0 +1,10 @@
+# Function that gives prompt for correspodning 
+
+_PROMPTS = {
+    'medqa': {
+        'prompt1': ''
+    },
+    'bioasq': {
+        'prompt1': ''
+    }
+}

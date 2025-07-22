@@ -1,0 +1,1 @@
+nohup python fine_tuning_on_medex_v1.py > output_2.log 2>&1 & disown
