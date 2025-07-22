@@ -125,7 +125,7 @@ class TrainingConfig(BaseModel):
             warmup_steps=self.warmup_steps,
             
 
-            evaluation_strategy=self.evaluation_strategy,
+            # eval_strategy=self.evaluation_strategy,
             # max_grad_norm=self.max_grad_norm,
             bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
             fp16=not (torch.cuda.is_available() and torch.cuda.is_bf16_supported()) and torch.cuda.is_available(),

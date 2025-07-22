@@ -143,8 +143,8 @@ model, tokenizer = llm_training.load_model_for_training(model_config, log)
 
 lima_training_config = llm_configs.TrainingConfig(
     run_name = run_name,
-    num_train_epochs = 100,
-    learning_rate  = 1e-5,
+    num_train_epochs = 10,
+    learning_rate  = 4e-5,
     logging_strategy = "steps", 
     logging_steps = 1,
     evaluation_strategy="epoch", # Evaluate at the end of each epoch
