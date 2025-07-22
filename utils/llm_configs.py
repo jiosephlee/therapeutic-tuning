@@ -43,7 +43,7 @@ class TrainingConfig(BaseModel):
     per_device_train_batch_size: int = 1
     gradient_accumulation_steps: int = 16 # This gives us a effective batch size of 32
     optim: str = "paged_adamw_8bit" # Saves VRAM by using 8bit Adam
-    # evaluation_strategy: str = "epoch"
+    evaluation_strategy: str = "epoch"
     weight_decay: float = 0.1
     # max_grad_norm: float = 0.3 # defaults to 1
     gradient_checkpointing: bool = False # Saves VRAM by using gradient checkpointing
@@ -125,7 +125,7 @@ class TrainingConfig(BaseModel):
             warmup_steps=self.warmup_steps,
             
 
-            # evaluation_strategy=self.evaluation_strategy,
+            evaluation_strategy=self.evaluation_strategy,
             # max_grad_norm=self.max_grad_norm,
             bf16=torch.cuda.is_available() and torch.cuda.is_bf16_supported(),
             fp16=not (torch.cuda.is_available() and torch.cuda.is_bf16_supported()) and torch.cuda.is_available(),

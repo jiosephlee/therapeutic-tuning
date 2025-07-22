@@ -12,7 +12,7 @@ import numpy as np
 from datasets import Dataset
 import pandas as pd
 import argparse
-from sklearn.metrics import roc_auc_score
+from sklearn.metrics import accuracy_score, roc_auc_score
 
 # --- Basic Configuration ---
 parser = argparse.ArgumentParser()
@@ -147,6 +147,7 @@ lima_training_config = llm_configs.TrainingConfig(
     learning_rate  = 1e-5,
     logging_strategy = "steps", 
     logging_steps = 1,
+    evaluation_strategy="epoch", # Evaluate at the end of each epoch
     gradient_checkpointing=False,
     context_length = 4096,
     use_liger_kernel=True,
@@ -161,6 +162,22 @@ lima_training_config = llm_configs.TrainingConfig(
     remove_unused_columns=False,
 )
 
+# --- Set up evaluation ---
+inference_cfg = llm_configs.InferenceConfig(
+    temperature=0,
+    do_sample=False,
+    repetition_penalty=1.0,
+    max_new_tokens=64, # Max tokens for 'Yes...' or 'No...'
+)
+
+validation_callback = llm_training.ClassificationAccuracyCallback(
+    tokenizer=tokenizer,
+    validation_dataset=val_ds,
+    inference_config=inference_cfg,
+    metric=args.metric,
+    log_prefix="validation",
+)
+
 # --- Train ---
 log.info(f"\n--- Starting {args.dataset} Fine-Tuning ---")
 trainer = llm_training.sft_train_on_dataset(
@@ -170,96 +187,44 @@ trainer = llm_training.sft_train_on_dataset(
     train_dataset=training_ds,
     train_cfg=lima_training_config,
     train=True,
-    use_liger_loss = True
+    use_liger_loss = True,
+    callbacks=[validation_callback]
 )
 
 log.info("\n\n--- Fine-Tuning Complete ---\n\n")
 log.info(f"Training arguments: {trainer.args}")
 
-# --- Evaluate ---
-inference_cfg = llm_configs.InferenceConfig(
-    temperature=0,
-    do_sample=False,
-    repetition_penalty=1.0,
-    max_new_tokens=64,
-)
-
+# --- Final Evaluation on Test Set ---
+log.info("\n--- Evaluating on Test Set ---")
 targets, preds = [], []
 
-for i in tqdm(range(len(val_ds)), desc="Inference on validation set"):
-    row = val_ds[i]
-    prompt = row["text"]
-    gt_answer = "yes" if row["Y"] == 1 else "no"
-    
-    gen_text = llm_training.generate_text(model, tokenizer, prompt, inference_cfg)
-    
-    # Extract generated text (remove the prompt part)
-    generated_response = gen_text[len(prompt):].strip().lower()
-
-    if i < 5:
-        print(f"Prompt: {prompt}")
-        print(f"GT answer: {gt_answer}")
-        print(f"Generated response: {generated_response}")
-        print("-"*100)
-    # Simple matching - check if "yes" or "no" appears in the response
-    if "yes" in generated_response:
-        pred_answer = 1
-    elif "no" in generated_response:
-        pred_answer = 0
-    else:
-        probs = llm_training.extract_logits_first_step(model, tokenizer, prompt, ["Yes","No"])
-        pred_answer = int(probs["Yes"] > probs["No"]) 
-
-    targets.append(gt_answer)
-    preds.append(pred_answer)
-
-targets = np.array(targets)
-preds = np.array(preds)
-
-if args.metric == "accuracy":
-    accuracy = np.mean(targets == preds)
-    print(f"\nAccuracy on {len(targets)} examples: {accuracy:.4f}")
-elif args.metric == "auroc":
-    auroc = roc_auc_score(targets, preds)
-    print(f"\nAUROC on {len(targets)} examples: {auroc:.4f}")
-
-
-# --- Evaluate ---
-inference_cfg = llm_configs.InferenceConfig(
-    temperature=0,
-    do_sample=False,
-    repetition_penalty=1.0,
-    max_new_tokens=64,
-)
-
-targets, preds = [], []
-
-for i in tqdm(range(len(test_ds)), desc="Inference on validation set"):
+for i in tqdm(range(len(test_ds)), desc="Inference on test set"):
     row = test_ds[i]
     prompt = row["text"]
-    gt_answer = "yes" if row["Y"] == 1 else "no"
+    gt_answer = row["Y"]
     
     gen_text = llm_training.generate_text(model, tokenizer, prompt, inference_cfg)
-    
-    # Extract generated text (remove the prompt part)
     generated_response = gen_text[len(prompt):].strip().lower()
 
     if i < 5:
         print(f"Prompt: {prompt}")
-        print(f"GT answer: {gt_answer}")
+        print(f"GT answer: {'yes' if gt_answer == 1 else 'no'}")
         print(f"Generated response: {generated_response}")
         print("-"*100)
+
     # Simple matching - check if "yes" or "no" appears in the response
     if "yes" in generated_response:
         pred_answer = 1
     elif "no" in generated_response:
         pred_answer = 0
     else:
-        probs = llm_training.extract_logits_first_step(model, tokenizer, prompt, ["Yes","No"])
-        pred_answer = int(probs["Yes"] > probs["No"]) 
-        # If neither yes nor no is found, skip this example
-        # continue
-    
+        try:
+            probs = llm_training.extract_logits_first_step(model, tokenizer, prompt, [" Yes", " No"])
+            pred_answer = int(probs[" Yes"] > probs[" No"])
+        except ValueError:
+            # If tokens are not single, default to a prediction (e.g., 0)
+            pred_answer = 0
+
     targets.append(gt_answer)
     preds.append(pred_answer)
 
@@ -267,8 +232,10 @@ targets = np.array(targets)
 preds = np.array(preds)
 
 if args.metric == "accuracy":
-    accuracy = np.mean(targets == preds)
-    print(f"\nAccuracy on {len(targets)} examples: {accuracy:.4f}")
+    score = accuracy_score(targets, preds)
+    print(f"\nFinal Test Accuracy: {score:.4f}")
+    wandb.log({"test/accuracy": score})
 elif args.metric == "auroc":
-    auroc = roc_auc_score(targets, preds)
-    print(f"\nAUROC on {len(targets)} examples: {auroc:.4f}")
+    score = roc_auc_score(targets, preds)
+    print(f"\nFinal Test AUROC: {score:.4f}")
+    wandb.log({"test/auroc": score})

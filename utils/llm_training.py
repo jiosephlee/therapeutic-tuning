@@ -21,6 +21,8 @@ from transformers import (
 from liger_kernel.transformers import LigerCrossEntropyLoss
 from trl import SFTConfig, SFTTrainer
 from utils.llm_configs import PeftConfig, ModelConfig, TrainingConfig, InferenceConfig
+from tqdm import tqdm
+from sklearn.metrics import roc_auc_score, accuracy_score
 
 # --------------------------------------------------------------------------
 # SECTION 2: CORE LLM OPERATIONS
@@ -724,3 +726,69 @@ def extract_logits_first_step(
 # logits = extract_logits_first_step(model, tokenizer, prompt, [" yes", " no"])
 # print(logits)          # {' yes': -3.21, ' no': -1.05}
 # prediction = int(logits[" yes"] > logits[" no"])   # 1 = yes, 0 = no
+
+
+class ClassificationAccuracyCallback(TrainerCallback):
+    """
+    A callback that evaluates classification accuracy or AUROC on a validation set
+    at the end of each epoch. It assumes a binary classification task where the
+    model's response is expected to contain 'yes' or 'no'.
+    """
+    def __init__(self, tokenizer, validation_dataset, inference_config, metric='accuracy', log_prefix="eval"):
+        self.tokenizer = tokenizer
+        self.validation_dataset = validation_dataset
+        self.inference_config = inference_config
+        self.metric = metric
+        self.log_prefix = log_prefix
+        self.history = []
+
+        if self.metric not in ['accuracy', 'auroc']:
+            raise ValueError("Metric must be either 'accuracy' or 'auroc'.")
+
+    def on_epoch_end(self, args, state, control, model, **kwargs):
+        model.eval()
+        
+        targets, preds = [], []
+        
+        for row in tqdm(self.validation_dataset, desc=f"Epoch {int(state.epoch)} evaluation"):
+            prompt = row["text"]
+            target = row["Y"]
+
+            # Generate response from the model
+            gen_text = generate_text(model, self.tokenizer, prompt, self.inference_config)
+            generated_response = gen_text[len(prompt):].strip().lower()
+
+            # Determine prediction
+            if "yes" in generated_response:
+                pred = 1
+            elif "no" in generated_response:
+                pred = 0
+            else:
+                # Fallback to logit comparison
+                try:
+                    # Note: Using " Yes" and " No" with a leading space is common for many tokenizers
+                    probs = extract_logits_first_step(model, self.tokenizer, prompt, [" Yes", " No"])
+                    pred = int(probs[" Yes"] > probs[" No"])
+                except ValueError:
+                    # If tokens are not single, default to a prediction (e.g., 0)
+                    pred = 0
+
+            targets.append(target)
+            preds.append(pred)
+
+        # Calculate metric
+        if self.metric == "accuracy":
+            score = accuracy_score(targets, preds)
+        elif self.metric == "auroc":
+            score = roc_auc_score(targets, preds)
+
+        if state.is_world_process_zero:
+            print(f"\nEpoch {int(state.epoch)} - {self.log_prefix}_{self.metric}: {score:.4f}")
+            wandb.log({f"{self.log_prefix}/{self.metric}": score}, step=state.global_step)
+        
+        self.history.append({'step': state.global_step, 'epoch': state.epoch, f'{self.log_prefix}_{self.metric}': score})
+
+        model.train()
+
+    def get_results_as_dataframe(self):
+        return pd.DataFrame(self.history)
