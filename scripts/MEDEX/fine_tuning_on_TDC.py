@@ -39,9 +39,9 @@ run = wandb.init(
 )
 
 # --- Load Data and Preprocess---
-train_df = pd.read_csv(f'./../../data/TDC/{args.dataset}/train_df.csv')
-val_df = pd.read_csv(f'./../../data/TDC/{args.dataset}/val_df.csv')
-test_df = pd.read_csv(f'./../../data/TDC/{args.dataset}/test_df.csv')
+train_df = pd.read_csv(f'../../data/TDC/{args.dataset}/train_df.csv')
+val_df = pd.read_csv(f'../../data/TDC/{args.dataset}/val_df.csv')
+test_df = pd.read_csv(f'../../data/TDC/{args.dataset}/test_df.csv')
 
 def row_to_text( row, split='train', dataset='AMES_1'):
     if dataset == 'AMES':
@@ -143,8 +143,8 @@ model, tokenizer = llm_training.load_model_for_training(model_config, log)
 
 lima_training_config = llm_configs.TrainingConfig(
     run_name = run_name,
-    num_train_epochs = 10,
-    learning_rate  = 4e-5,
+    num_train_epochs = 25,
+    learning_rate  = 2e-5,
     logging_strategy = "steps", 
     logging_steps = 1,
     evaluation_strategy="epoch", # Evaluate at the end of each epoch
@@ -170,13 +170,13 @@ inference_cfg = llm_configs.InferenceConfig(
     max_new_tokens=64, # Max tokens for 'Yes...' or 'No...'
 )
 
-validation_callback = llm_training.ClassificationAccuracyCallback(
-    tokenizer=tokenizer,
-    validation_dataset=val_ds,
-    inference_config=inference_cfg,
-    metric=args.metric,
-    log_prefix="validation",
-)
+# validation_callback = llm_training.ClassificationAccuracyCallback(
+#     tokenizer=tokenizer,
+#     validation_dataset=val_ds,
+#     inference_config=inference_cfg,
+#     metric=args.metric,
+#     log_prefix="validation",
+# )
 
 # --- Train ---
 log.info(f"\n--- Starting {args.dataset} Fine-Tuning ---")
@@ -188,12 +188,59 @@ trainer = llm_training.sft_train_on_dataset(
     train_cfg=lima_training_config,
     train=True,
     use_liger_loss = True,
-    callbacks=[validation_callback]
+    # callbacks=[validation_callback]
 )
 
 log.info("\n\n--- Fine-Tuning Complete ---\n\n")
 log.info(f"Training arguments: {trainer.args}")
 
+
+# --- Final Evaluation on Test Set ---
+log.info("\n--- Evaluating on Val Set ---")
+targets, preds = [], []
+
+for i in tqdm(range(len(val_ds)), desc="Inference on val set"):
+    row = val_ds[i]
+    prompt = row["text"]
+    gt_answer = row["Y"]
+    
+    gen_text = llm_training.generate_text(model, tokenizer, prompt, inference_cfg)
+    generated_response = gen_text[len(prompt):].strip().lower()
+
+    if i < 5:
+        print(f"Prompt: {prompt}")
+        print(f"GT answer: {'yes' if gt_answer == 1 else 'no'}")
+        print(f"Generated response: {generated_response}")
+        print("-"*100)
+
+    # Simple matching - check if "yes" or "no" appears in the response
+    if "yes" in generated_response:
+        pred_answer = 1
+    elif "no" in generated_response:
+        pred_answer = 0
+    else:
+        try:
+            probs = llm_training.extract_logits_first_step(model, tokenizer, prompt, [" Yes", " No"])
+            pred_answer = int(probs[" Yes"] > probs[" No"])
+        except ValueError:
+            # If tokens are not single, default to a prediction (e.g., 0)
+            pred_answer = 0
+
+    targets.append(gt_answer)
+    preds.append(pred_answer)
+
+targets = np.array(targets)
+preds = np.array(preds)
+
+if args.metric == "accuracy":
+    score = accuracy_score(targets, preds)
+    print(f"\nFinal Val Accuracy: {score:.4f}")
+    # wandb.log({"test/accuracy": score})
+elif args.metric == "auroc":
+    score = roc_auc_score(targets, preds)
+    print(f"\nFinal Val AUROC: {score:.4f}")
+    # wandb.log({"test/auroc": score})
+    
 # --- Final Evaluation on Test Set ---
 log.info("\n--- Evaluating on Test Set ---")
 targets, preds = [], []
@@ -234,8 +281,8 @@ preds = np.array(preds)
 if args.metric == "accuracy":
     score = accuracy_score(targets, preds)
     print(f"\nFinal Test Accuracy: {score:.4f}")
-    wandb.log({"test/accuracy": score})
+    # wandb.log({"test/accuracy": score})
 elif args.metric == "auroc":
     score = roc_auc_score(targets, preds)
     print(f"\nFinal Test AUROC: {score:.4f}")
-    wandb.log({"test/auroc": score})
+    # wandb.log({"test/auroc": score})

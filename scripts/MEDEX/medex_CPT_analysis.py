@@ -105,8 +105,8 @@ lima_training_config = llm_configs.TrainingConfig(
     gradient_checkpointing=False,
     context_length = 1024,
     use_liger_kernel=True,
-    per_device_train_batch_size=2,
-    gradient_accumulation_steps=64,
+    per_device_train_batch_size=8,
+    gradient_accumulation_steps=16,
     # warmup_steps  = 0, # LIMA specifies no warmup, so we set this explicitly
     warmup_ratio = 0.3, # Use our default warmup ratio instead
     packing=True,
@@ -122,7 +122,7 @@ log.info("\n--- Initializing Knowledge Probe Callback ---")
 knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
     tokenizer=tokenizer,
     probe_dataset_path="../../data/MEDEX/knowledge_probes_10000.csv",
-    batch_size=8 
+    batch_size=16
 )
 
 # === Run LIMA Fine-Tuning ===
