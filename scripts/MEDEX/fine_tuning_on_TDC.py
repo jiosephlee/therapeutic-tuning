@@ -60,9 +60,26 @@ def row_to_text( row, split='train', dataset='AMES_1'):
         text = f"Question: Is the drug represented by this SMILES string, {row['Drug']}, mutagenic?\nAnswer:"
         if split == 'train':
             text += f"{' Yes, the drug is mutagenic.' if row['Y']==1 else ' No, the drug is not mutagenic.'}"
-    elif dataset == 'Skin Reaction':
-        text = f"Q: This is the SMILES string of the drug: {row['Drug']}. Can this drug cause skin reaction?\nA: "
-
+    elif dataset == 'Skin':
+        text = f"SMILES: {row['Drug']}\nQuestion: Can the drug represented by this SMILES string cause skin reaction?\nAnswer:"
+        if split == 'train':
+            text += f"{' Yes, the drug can cause skin reaction.' if row['Y']==1 else ' No, the drug cannot cause skin reaction.'}"
+    elif dataset == 'Carcinogens':
+        text = f"SMILES: {row['Drug']}\nQuestion: Is the drug represented by this SMILES string carcinogenic?\nAnswer:"
+        if split == 'train':
+            text += f"{' Yes, the drug is carcinogenic.' if row['Y']==1 else ' No, the drug is not carcinogenic.'}"
+    if dataset == 'BBB':
+        text = f"SMILES: {row['Drug']}\nQuestion: Can the drug represented by this SMILES string penetrate the blood-brain barrier to deliver to the site of action?\nAnswer:"
+        if split == 'train':
+            text += f"{' Yes, the drug can penetrate the blood-brain barrier.' if row['Y']==1 else ' No, the drug cannot penetrate the blood-brain barrier.'}"
+    if dataset == 'Bioavailability':
+        text = f"SMILES: {row['Drug']}\nQuestion: Can the drug represented by this SMILES string be absorbed into the bloodstream?\nAnswer:"
+        if split == 'train':
+            text += f"{' Yes, the drug can be absorbed into the bloodstream.' if row['Y']==1 else ' No, the drug cannot be absorbed into the bloodstream.'}"
+    if dataset == 'hERG':
+        text = f"SMILES: {row['Drug']}\nQuestion: Does the drug represented by this SMILES string block the hERG channel (IC50 < 10uM)?\nAnswer:"
+        if split == 'train':
+            text += f"{' Yes, the drug blocks the hERG channel.' if row['Y']==1 else ' No, the drug does not block the hERG channel.'}"
     return text
 
 def row_to_prompt( row, dataset='AMES'):
