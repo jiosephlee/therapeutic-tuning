@@ -19,7 +19,7 @@ os.environ["WANDB_PROJECT"]="medex_continued_pretraining"
 
 from datasets import load_dataset
 
-ds = load_dataset("medexanon/Medex")['train'].select(range(1000000))
+ds = load_dataset("medexanon/Medex", split="train[:1%]").select(range(10000))
 
 # === Cell 1: Configuration ===
 model_config = llm_configs.ModelConfig(
@@ -47,19 +47,33 @@ def concat_columns_and_explode(batch, tokenizer):
     all_texts = []
     # The input 'batch' is a dictionary of lists (e.g., batch['fact'] is a list of facts)
     for i in range(len(batch["fact"])):
-        # 1) Create a row for the fact text, if it exists
-        fact = batch["fact"][i]
-        if fact:
-            all_texts.append(f"{fact.strip()}{tokenizer.eos_token}")
-
-        # 2) Create a row for the SMILES/entity association
+        # Create the full probe text matching create_probe_text format
+        chunks = []
+        
+        entity = batch["entity"][i]
+        fact_text = batch["fact"][i]
+        
+        # 1. Entity
+        if entity:
+            chunks.append(f"Entity: {entity}")
+        
+        # 2. SMILES
         mol = batch["MolInfo"][i]
         if isinstance(mol, dict):
             smiles = mol.get("SMILES")
-            entity = batch["entity"][i]
-            if smiles and entity:
-                smiles_text = f"The SMILES string of '{entity}' is '{smiles}'."
-                all_texts.append(f"{smiles_text}{tokenizer.eos_token}")
+            if smiles:
+                chunks.append(f"SMILES: {smiles}")
+        
+        # 3. Fact
+        if fact_text:
+            chunks.append(fact_text)
+        
+        # Join with ". " and add a final period, then EOS token
+        if chunks:
+            full_text = ". ".join(chunks)
+            if not full_text.endswith('.'):
+                full_text += '.'
+            all_texts.append(f"{full_text}{tokenizer.eos_token}")
 
     # Return a dictionary where the 'text' key maps to the list of all generated strings
     return {"text": all_texts}
@@ -98,6 +112,15 @@ lima_training_config = llm_configs.TrainingConfig(
 )
 
 
+# === Create Callback ===
+log.info("\n--- Initializing Knowledge Probe Callback ---")
+knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
+    tokenizer=tokenizer,
+    probe_dataset_path="../../data/MEDEX/knowledge_probes_10000.csv",
+    max_length=512, # Should match context_length
+    batch_size=8 
+)
+
 # === Run LIMA Fine-Tuning ===
 log.info("\n--- Starting LIMA Fine-Tuning ---")
 # The model object will be updated with the fine-tuned weights
@@ -108,5 +131,13 @@ trainer = llm_training.sft_train_on_dataset(
     train_dataset=medex_ds,
     train_cfg=lima_training_config,
     train=True,
-    use_liger_loss = True
+    use_liger_loss = True,
+    callbacks=[knowledge_probe_callback]
 )
+
+# === Plotting Results ===
+log.info("\n--- Generating Plots ---")
+output_plot_dir = f"results/plots/{lima_training_config.run_name}"
+knowledge_probe_callback.plot_average_perplexities(output_dir=output_plot_dir)
+knowledge_probe_callback.plot_perplexity_by_entity_frequency(output_dir=output_plot_dir)
+log.info(f"Plots saved to {output_plot_dir}")

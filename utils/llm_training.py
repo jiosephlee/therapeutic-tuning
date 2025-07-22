@@ -7,6 +7,7 @@ import wandb
 import torch
 from typing import Optional, List, Literal
 import pandas as pd
+import matplotlib.pyplot as plt
 
 # Third-party imports
 from datasets import Dataset, load_dataset
@@ -315,18 +316,15 @@ def save_model(model, tokenizer, log, save_path: str):
     tokenizer.save_pretrained(save_path)
     log.info(f"Model saved to {save_path}")
     
-    
-class KnowledgeProbeCallback(TrainerCallback):
-    """
-    A unified callback that evaluates two types of perplexity on a custom set of
-    knowledge probes in a single forward pass:
-    1.  Whole statement perplexity: PPL over the entire probe text.
-    2.  Targeted perplexity: PPL over the last three words of the probe.
 
-    This avoids redundant model calls, logs both metrics to W&B, and
-    stores them for external analysis.
+class MedexKnowledgeProbeCallback(TrainerCallback):
     """
-    def __init__(self, tokenizer: AutoTokenizer, probe_dataset_path: str, max_length: int, batch_size: int = 8, log_prefix="probe_ppl"):
+    A callback designed for the MEDEX dataset to evaluate perplexity on specific
+    knowledge probes from a CSV file. It calculates perplexity for 'entity', 
+    'text', and 'fact' columns, including "probe" versions for text and fact 
+    that exclude initial words. It also provides plotting functionalities.
+    """
+    def __init__(self, tokenizer: AutoTokenizer, probe_dataset_path: str, max_length: int, batch_size: int = 8, log_prefix="medex_probe_ppl"):
         self.tokenizer = tokenizer
         self.log_prefix = log_prefix
         self.max_length = max_length
@@ -336,54 +334,63 @@ class KnowledgeProbeCallback(TrainerCallback):
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         df = pd.read_csv(probe_dataset_path)
-        self.probes = df["raw_knowledge_statement"].tolist()
-        self.sections = df["section"].tolist()
+        # Only store text and fact for perplexity calculation
+        self.probes = {
+            "text": df["text"].tolist(),
+            "fact": df["fact"].tolist(),
+        }
         self.probe_indices = df.index.tolist()
 
-        # History for both metrics
-        self.whole_history = []
-        self.targeted_history = []
+        # Calculate entity frequencies and assign buckets for analysis
+        entity_counts = df['entity'].value_counts()
+        self.entity_freq_map = df['entity'].map(entity_counts)
+        bins = [0, 5, 10, 20, 30, 40, 50, 100, float('inf')]
+        labels = ['1-5', '6-10', '11-20', '21-30', '31-40', '41-50', '51-100', '100+']
+        self.entity_freq_buckets = pd.cut(self.entity_freq_map, bins=bins, labels=labels, right=True)
 
-        # Pre-calculate context token lengths for targeted PPL
-        self.context_token_lengths = []
-        for statement in self.probes:
-            words = statement.split()
-            context_part = " ".join(words[:-3]) if len(words) > 3 else ""
-            num_tokens = len(self.tokenizer(context_part, add_special_tokens=False)['input_ids'])
-            self.context_token_lengths.append(num_tokens)
+        self.history = []
+
+        # Pre-calculate context token lengths for "probe" PPL
+        self.context_token_lengths = {"text": [], "fact": []}
+        for col in self.probes.keys(): # Will be ["text", "fact"]
+            for statement in self.probes[col]:
+                words = str(statement).split()
+                # Determine number of words to use as context
+                context_word_count = 5 if len(words) < 20 else 10
+                context_part = " ".join(words[:context_word_count])
+                num_tokens = len(self.tokenizer(context_part, add_special_tokens=False)['input_ids'])
+                self.context_token_lengths[col].append(num_tokens)
 
     def on_step_end(self, args, state, control, model, **kwargs):
         model.eval()
         device = model.device
 
-        # Lists to store results from all mini-batches
-        all_whole_perplexities = []
-        all_targeted_perplexities = []
-        
-        # Process probes in mini-batches to conserve GPU memory
-        for i in range(0, len(self.probes), self.batch_size):
-            batch_probes = self.probes[i:i + self.batch_size]
-            batch_context_lengths = self.context_token_lengths[i:i + self.batch_size]
+        step_results = {'step': state.global_step}
+        log_data = {}
+
+        probe_cols = ["text", "fact"] # Only calculate PPL for these columns
+        for col in probe_cols:
+            all_perplexities = []
+            all_probe_perplexities = []
             
-            if not batch_probes:
-                continue
-
-            inputs = self.tokenizer(
-                batch_probes,
-                return_tensors="pt",
-                padding=True,
-                truncation=True,
-                max_length=self.max_length
-            ).to(device)
-
-            input_ids = inputs["input_ids"]
-            attention_mask = inputs["attention_mask"]
-
-            with torch.no_grad():
-                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=input_ids)
-                logits = outputs.logits
+            # Process probes in mini-batches to conserve GPU memory
+            for i in range(0, len(self.probes[col]), self.batch_size):
+                batch_texts = [str(t) for t in self.probes[col][i:i + self.batch_size]]
                 
-                # --- Common Calculations ---
+                if not batch_texts:
+                    continue
+
+                inputs = self.tokenizer(
+                    batch_texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length
+                ).to(device)
+
+                input_ids = inputs["input_ids"]
+                attention_mask = inputs["attention_mask"]
+
+                with torch.no_grad():
+                    outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=input_ids)
+                    logits = outputs.logits
+
                 shift_logits = logits[..., :-1, :].contiguous()
                 shift_labels = input_ids[..., 1:].contiguous()
                 shift_attention_mask = attention_mask[..., 1:].contiguous()
@@ -392,185 +399,109 @@ class KnowledgeProbeCallback(TrainerCallback):
                 loss_per_token = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
                 loss_per_token = loss_per_token.view(input_ids.size(0), -1)
 
-                # --- 1. Whole Statement Perplexity ---
+                # --- Whole Statement Perplexity ---
                 whole_masked_loss = loss_per_token * shift_attention_mask
                 whole_sum_loss = whole_masked_loss.sum(dim=1)
                 whole_num_tokens = shift_attention_mask.sum(dim=1)
                 
-                whole_non_zero_mask = whole_num_tokens > 0
                 whole_mean_loss = torch.zeros_like(whole_sum_loss, dtype=torch.float32)
-                valid_indices_whole = torch.where(whole_non_zero_mask)[0]
+                valid_indices_whole = torch.where(whole_num_tokens > 0)[0]
                 if len(valid_indices_whole) > 0:
                     whole_mean_loss[valid_indices_whole] = whole_sum_loss[valid_indices_whole] / whole_num_tokens[valid_indices_whole]
                 
-                whole_perplexities = torch.exp(whole_mean_loss)
-                all_whole_perplexities.append(whole_perplexities)
+                perplexities = torch.exp(whole_mean_loss)
+                all_perplexities.append(perplexities)
 
-                # --- 2. Targeted (Last 3 Words) Perplexity ---
+                # --- "Probe" Perplexity ---
+                batch_context_lengths = self.context_token_lengths[col][i:i + self.batch_size]
                 target_mask = torch.zeros_like(shift_labels, dtype=torch.float)
-                for j in range(len(batch_probes)): # Iterate over the mini-batch
-                    # The loss for the N-th token is at index N-1 in shifted tensors
-                    context_len = batch_context_lengths[j]
-                    start_idx = max(0, context_len)
+                for j in range(len(batch_texts)):
+                    start_idx = max(0, batch_context_lengths[j])
                     target_mask[j, start_idx:] = 1
 
-                targeted_final_mask = shift_attention_mask * target_mask
-                targeted_masked_loss = loss_per_token * targeted_final_mask
-                targeted_sum_loss = targeted_masked_loss.sum(dim=1)
-                targeted_num_tokens = targeted_final_mask.sum(dim=1)
+                probe_final_mask = shift_attention_mask * target_mask
+                probe_masked_loss = loss_per_token * probe_final_mask
+                probe_sum_loss = probe_masked_loss.sum(dim=1)
+                probe_num_tokens = probe_final_mask.sum(dim=1)
 
-                targeted_non_zero_mask = targeted_num_tokens > 0
-                targeted_mean_loss = torch.zeros_like(targeted_sum_loss, dtype=torch.float32)
-                valid_indices_targeted = torch.where(targeted_non_zero_mask)[0]
-                if len(valid_indices_targeted) > 0:
-                    targeted_mean_loss[valid_indices_targeted] = targeted_sum_loss[valid_indices_targeted] / targeted_num_tokens[valid_indices_targeted]
+                probe_mean_loss = torch.zeros_like(probe_sum_loss, dtype=torch.float32)
+                valid_indices_probe = torch.where(probe_num_tokens > 0)[0]
+                if len(valid_indices_probe) > 0:
+                    probe_mean_loss[valid_indices_probe] = probe_sum_loss[valid_indices_probe] / probe_num_tokens[valid_indices_probe]
 
-                targeted_perplexities = torch.exp(targeted_mean_loss)
-                all_targeted_perplexities.append(targeted_perplexities)
+                probe_perplexities = torch.exp(probe_mean_loss)
+                all_probe_perplexities.append(probe_perplexities)
 
-        # Concatenate results from all batches
-        whole_perplexities_all = torch.cat(all_whole_perplexities)
-        targeted_perplexities_all = torch.cat(all_targeted_perplexities)
+            # Consolidate and log results for the column
+            final_perplexities = torch.cat(all_perplexities)
+            step_results[f'{col}_perplexity'] = final_perplexities.cpu().tolist()
+            log_data[f"{self.log_prefix}/{col}_avg_ppl"] = final_perplexities[~torch.isinf(final_perplexities)].mean().item()
 
-        # --- Logging and Storing ---
+            final_probe_perplexities = torch.cat(all_probe_perplexities)
+            step_results[f'{col}_probe_perplexity'] = final_probe_perplexities.cpu().tolist()
+            log_data[f"{self.log_prefix}/{col}_probe_avg_ppl"] = final_probe_perplexities[~torch.isinf(final_probe_perplexities)].mean().item()
+
+        self.history.append(step_results)
         if state.is_world_process_zero:
-            log_data = {}
-            
-            # Create masks for valid (non-inf) perplexities
-            valid_whole_mask = ~torch.isinf(whole_perplexities_all)
-            valid_targeted_mask = ~torch.isinf(targeted_perplexities_all)
+            wandb.log(log_data, step=state.global_step)
 
-            # Log whole PPL avg
-            if valid_whole_mask.any():
-                avg_ppl = whole_perplexities_all[valid_whole_mask].mean().item()
-                log_data[f"{self.log_prefix}/whole_avg"] = avg_ppl
-            
-            # Log targeted PPL avg
-            if valid_targeted_mask.any():
-                avg_ppl = targeted_perplexities_all[valid_targeted_mask].mean().item()
-                log_data[f"{self.log_prefix}/targeted_avg"] = avg_ppl
-            
-            if log_data:
-                wandb.log(log_data, step=state.global_step)
-        
-        # Store data internally
-        self.whole_history.append({
-            'step': state.global_step,
-            'perplexities': whole_perplexities_all.cpu().tolist(),
-        })
-        self.targeted_history.append({
-            'step': state.global_step,
-            'perplexities': targeted_perplexities_all.cpu().tolist(),
-        })
-        
         model.train()
 
-    def _get_dataframe_from_history(self, history):
-        if not history:
-            return pd.DataFrame()
+    def get_results_dataframe(self):
         records = []
-        for entry in history:
+        for entry in self.history:
             step = entry['step']
-            for i, perplexity in enumerate(entry['perplexities']):
-                records.append({
+            num_probes = len(self.probe_indices)
+            for i in range(num_probes):
+                record = {
                     'step': step,
                     'probe_index': self.probe_indices[i],
-                    'section': self.sections[i],
-                    'perplexity': perplexity
-                })
+                    'entity_freq_bucket': self.entity_freq_buckets[i],
+                }
+                for col in ["text", "fact"]:
+                    record[f'{col}_perplexity'] = entry[f'{col}_perplexity'][i]
+                    record[f'{col}_probe_perplexity'] = entry[f'{col}_probe_perplexity'][i]
+                records.append(record)
         return pd.DataFrame(records)
 
-    def get_whole_perplexity_dataframe(self):
-        """
-        Returns the collected whole-statement perplexity data as a pandas DataFrame.
-        """
-        return self._get_dataframe_from_history(self.whole_history)
+    def plot_average_perplexities(self, output_dir="."):
+        df = self.get_results_dataframe()
+        avg_df = df.groupby('step').mean(numeric_only=True)
 
-    def get_targeted_perplexity_dataframe(self):
-        """
-        Returns the collected targeted (last three words) perplexity data as a pandas DataFrame.
-        """
-        return self._get_dataframe_from_history(self.targeted_history)
+        plt.figure(figsize=(12, 8))
+        metrics_to_plot = ['text_perplexity', 'text_probe_perplexity', 'fact_perplexity', 'fact_probe_perplexity']
+        for metric in metrics_to_plot:
+            plt.plot(avg_df.index, avg_df[metric], label=metric)
+        
+        plt.title('Average Perplexity Over Training Steps')
+        plt.xlabel('Training Step')
+        plt.ylabel('Perplexity')
+        plt.legend()
+        plt.grid(True)
+        plt.tight_layout()
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, "average_perplexities.png"))
+        plt.close()
 
-
-class CorpusPerplexityCallback(TrainerCallback):
-    """
-    Calculates the perplexity of an entire text corpus at the end of each
-    training step using a strided sliding window approach. This provides a
-    more accurate perplexity measure for long documents than naive chunking.
-    Based on the Hugging Face documentation for PPL with fixed-length models.
-    """
-    def __init__(self, text_content: str, tokenizer: AutoTokenizer, max_length: int, stride: int = 512, log_prefix="corpus_perplexity"):
-        self.tokenizer = tokenizer
-        self.max_length = max_length
-        self.stride = stride
-        self.log_prefix = log_prefix
-        self.encodings = self.tokenizer(text_content, return_tensors="pt")
-        self.history = []
-
-    def on_step_end(self, args, state, control, model, **kwargs):
-        model.eval()
-        device = model.device
-
-        seq_len = self.encodings.input_ids.size(1)
-        nll_sum = 0.0
-        n_tokens = 0
-        prev_end_loc = 0
-
-        for begin_loc in range(0, seq_len, self.stride):
-            end_loc = min(begin_loc + self.max_length, seq_len)
-            trg_len = end_loc - prev_end_loc
-            input_ids = self.encodings.input_ids[:, begin_loc:end_loc].to(device)
-            target_ids = input_ids.clone()
+    def plot_perplexity_by_entity_frequency(self, output_dir="."):
+        df = self.get_results_dataframe()
+        
+        for probe_type in ['text_probe_perplexity', 'fact_probe_perplexity']:
+            grouped_df = df.groupby(['entity_freq_bucket', 'step'])[probe_type].mean().reset_index()
             
-            # Mask out tokens that are only used for context. The model will not
-            # calculate loss for these tokens (label = -100).
-            target_ids[:, :-trg_len] = -100
-
-            if torch.all(target_ids == -100):
-                prev_end_loc = end_loc
-                if end_loc == seq_len:
-                    break
-                continue
-
-            with torch.no_grad():
-                outputs = model(input_ids, labels=target_ids)
-                # outputs.loss is the *average* negative log-likelihood for the window.
-                neg_log_likelihood = outputs.loss
-
-            # To get the total NLL for the window, we multiply the average by the
-            # number of tokens the loss was calculated over.
-            num_valid_tokens = (target_ids != -100).sum().item()
-            # The model internally shifts labels, so loss is on one less token per sequence.
-            # Our batch size is 1 here.
-            num_loss_tokens = num_valid_tokens - 1
-            if num_loss_tokens > 0:
-                nll_sum += neg_log_likelihood.item() * num_loss_tokens
-                n_tokens += num_loss_tokens
-
-            prev_end_loc = end_loc
-            if end_loc == seq_len:
-                break
-        
-        if n_tokens > 0:
-            avg_nll = nll_sum / n_tokens
-            perplexity = torch.exp(torch.tensor(avg_nll))
-        else:
-            perplexity = torch.tensor(float('inf'))
-
-        perplexity_item = perplexity.item()
-        if state.is_world_process_zero:
-            wandb.log({f"{self.log_prefix}/full_paper": perplexity_item}, step=state.global_step)
-        
-        self.history.append({'step': state.global_step, 'corpus_perplexity': perplexity_item})
-
-        model.train()
-
-    def get_results_as_dataframe(self):
-        """
-        Returns the collected corpus perplexity data as a pandas DataFrame.
-        """
-        return pd.DataFrame(self.history)
+            plt.figure(figsize=(14, 9))
+            for bucket, data in grouped_df.groupby('entity_freq_bucket'):
+                plt.plot(data['step'], data[probe_type], label=f'Freq: {bucket}')
+                
+            plt.title(f'{probe_type.replace("_", " ").title()} by Entity Frequency')
+            plt.xlabel('Training Step')
+            plt.ylabel('Average Perplexity')
+            plt.legend(title="Entity Frequency Bucket")
+            plt.grid(True)
+            plt.tight_layout()
+            os.makedirs(output_dir, exist_ok=True)
+            plt.savefig(os.path.join(output_dir, f"{probe_type}_by_entity_frequency.png"))
+            plt.close()
 
 
 class TrainingLossPerplexityCallback(TrainerCallback):
@@ -656,8 +587,6 @@ def chunk_text(text_content: str, tokenizer, context_length: int) -> tuple[List[
         text_chunks.append(chunk_text)
     
     return text_chunks, num_tokens
-
-
 
 @torch.inference_mode()
 def generate_text(model, tokenizer, prompt: str, config: InferenceConfig) -> str:
@@ -788,7 +717,6 @@ def extract_logits_first_step(
 
     # Extract logits for requested tokens
     return {tok: first_step_logits[tid].item() for tok, tid in token_id_map.items()}
-
 
 # ---------- usage ----------
 # prompt = "Answer with yes or no: Is acetaminophen mutagenic?\nA: "
