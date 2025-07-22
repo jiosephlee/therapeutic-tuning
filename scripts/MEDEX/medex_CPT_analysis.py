@@ -122,8 +122,7 @@ log.info("\n--- Initializing Knowledge Probe Callback ---")
 knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
     tokenizer=tokenizer,
     probe_dataset_path="../../data/MEDEX/knowledge_probes_10000.csv",
-    max_length=1024, # Should match context_length
-    batch_size=16
+    batch_size=8 
 )
 
 # === Run LIMA Fine-Tuning ===

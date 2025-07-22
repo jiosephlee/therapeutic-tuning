@@ -327,10 +327,9 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
     'text', and 'fact' columns, including "probe" versions for text and fact 
     that exclude initial words. It also provides plotting functionalities.
     """
-    def __init__(self, tokenizer: AutoTokenizer, probe_dataset_path: str, max_length: int, batch_size: int = 8, log_prefix="medex_probe_ppl"):
+    def __init__(self, tokenizer: AutoTokenizer, probe_dataset_path: str, batch_size: int = 8, log_prefix="medex_probe_ppl"):
         self.tokenizer = tokenizer
         self.log_prefix = log_prefix
-        self.max_length = max_length
         self.batch_size = batch_size
 
         if self.tokenizer.pad_token is None:
@@ -343,6 +342,19 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
             "fact": df["fact"].tolist(),
         }
         self.probe_indices = df.index.tolist()
+
+        # Dynamically determine max_length from the longest probe text
+        max_len = 0
+        all_probe_texts = self.probes['text'] + self.probes['fact']
+        for text in all_probe_texts:
+            token_len = len(self.tokenizer(str(text), add_special_tokens=False)['input_ids'])
+            if token_len > max_len:
+                max_len = token_len
+        
+        # Set max_length to the calculated value, padding to a multiple of 8 for performance.
+        self.max_length = (max_len + 7) // 8 * 8
+        print(f"INFO: MedexKnowledgeProbeCallback dynamically set max_length to {self.max_length}")
+
 
         # Calculate entity frequencies and assign buckets for analysis
         entity_counts = df['entity'].value_counts()
