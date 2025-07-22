@@ -18,6 +18,7 @@ from transformers import (
     BitsAndBytesConfig,
     TrainerCallback,
 )
+from liger_kernel.transformers import LigerCrossEntropyLoss
 from trl import SFTConfig, SFTTrainer
 from utils.llm_configs import PeftConfig, ModelConfig, TrainingConfig, InferenceConfig
 
@@ -395,7 +396,7 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
                 shift_labels = input_ids[..., 1:].contiguous()
                 shift_attention_mask = attention_mask[..., 1:].contiguous()
 
-                loss_fct = torch.nn.CrossEntropyLoss(reduction='none')
+                loss_fct = LigerCrossEntropyLoss(reduction='none')
                 loss_per_token = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
                 loss_per_token = loss_per_token.view(input_ids.size(0), -1)
 

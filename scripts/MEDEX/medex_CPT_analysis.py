@@ -1,10 +1,10 @@
 # add .. path 
 import os
 import sys
-sys.path.append('..')
+sys.path.append('../..')
 import utils.llm_training as llm_training
 import utils.llm_configs as llm_configs
-
+import wandb
 import logging
 
 # --- Basic Configuration ---
@@ -15,8 +15,13 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-os.environ["WANDB_PROJECT"]="medex_continued_pretraining"
+run_name = "Analysis on 10K Facts"
 
+run = wandb.init(
+    project="medex_continued_pretraining",
+    name=run_name,
+    group="Analysis",
+)
 from datasets import load_dataset
 
 ds = load_dataset("medexanon/Medex", split="train[:1%]").select(range(10000))
@@ -92,16 +97,16 @@ ds_with_text = ds.map(
 medex_ds = ds_with_text.shuffle(seed=42).select_columns(["text"])
 
 lima_training_config = llm_configs.TrainingConfig(
-    run_name = "1M samples on medex (prompt ablation 3)",
-    num_train_epochs = 1,
+    run_name = run_name,
+    num_train_epochs = 10,
     learning_rate  = 1e-5,
     logging_strategy = "steps", 
     logging_steps = 1,
     gradient_checkpointing=False,
-    context_length = 512,
+    context_length = 1024,
     use_liger_kernel=True,
-    per_device_train_batch_size =8,
-    gradient_accumulation_steps=16,
+    per_device_train_batch_size=2,
+    gradient_accumulation_steps=64,
     # warmup_steps  = 0, # LIMA specifies no warmup, so we set this explicitly
     warmup_ratio = 0.3, # Use our default warmup ratio instead
     packing=True,
@@ -118,7 +123,7 @@ knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
     tokenizer=tokenizer,
     probe_dataset_path="../../data/MEDEX/knowledge_probes_10000.csv",
     max_length=512, # Should match context_length
-    batch_size=8 
+    batch_size=16
 )
 
 # === Run LIMA Fine-Tuning ===
