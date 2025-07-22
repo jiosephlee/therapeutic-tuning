@@ -1,7 +1,7 @@
 # add .. path 
 import os
 import sys
-sys.path.append('..')
+sys.path.append('../..')
 import utils.llm_training as llm_training
 import utils.llm_configs as llm_configs
 import wandb
@@ -39,9 +39,9 @@ run = wandb.init(
 )
 
 # --- Load Data and Preprocess---
-train_df = pd.read_csv(f'./../data/TDC/{args.dataset}/train_df.csv')
-val_df = pd.read_csv(f'./../data/TDC/{args.dataset}/val_df.csv')
-test_df = pd.read_csv(f'./../data/TDC/{args.dataset}/test_df.csv')
+train_df = pd.read_csv(f'./../../data/TDC/{args.dataset}/train_df.csv')
+val_df = pd.read_csv(f'./../../data/TDC/{args.dataset}/val_df.csv')
+test_df = pd.read_csv(f'./../../data/TDC/{args.dataset}/test_df.csv')
 
 def row_to_text( row, split='train', dataset='AMES_1'):
     if dataset == 'AMES':
@@ -143,8 +143,8 @@ model, tokenizer = llm_training.load_model_for_training(model_config, log)
 
 lima_training_config = llm_configs.TrainingConfig(
     run_name = run_name,
-    num_train_epochs = 1,
-    learning_rate  = 4e-5,
+    num_train_epochs = 100,
+    learning_rate  = 1e-5,
     logging_strategy = "steps", 
     logging_steps = 1,
     gradient_checkpointing=False,
@@ -196,10 +196,10 @@ for i in tqdm(range(len(val_ds)), desc="Inference on validation set"):
     # Extract generated text (remove the prompt part)
     generated_response = gen_text[len(prompt):].strip().lower()
 
-    if i < 10:
-        # print(f"Prompt: {prompt}")
-        print(f"Generated response: {gen_text}")
+    if i < 5:
+        print(f"Prompt: {prompt}")
         print(f"GT answer: {gt_answer}")
+        print(f"Generated response: {generated_response}")
         print("-"*100)
     # Simple matching - check if "yes" or "no" appears in the response
     if "yes" in generated_response:
@@ -244,10 +244,10 @@ for i in tqdm(range(len(test_ds)), desc="Inference on validation set"):
     # Extract generated text (remove the prompt part)
     generated_response = gen_text[len(prompt):].strip().lower()
 
-    if i < 10:
-        # print(f"Prompt: {prompt}")
-        print(f"Generated response: {gen_text}")
+    if i < 5:
+        print(f"Prompt: {prompt}")
         print(f"GT answer: {gt_answer}")
+        print(f"Generated response: {generated_response}")
         print("-"*100)
     # Simple matching - check if "yes" or "no" appears in the response
     if "yes" in generated_response:
