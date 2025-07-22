@@ -98,7 +98,7 @@ medex_ds = ds_with_text.shuffle(seed=42).select_columns(["text"])
 
 lima_training_config = llm_configs.TrainingConfig(
     run_name = run_name,
-    num_train_epochs = 10,
+    num_train_epochs = 5,
     learning_rate  = 1e-5,
     logging_strategy = "steps", 
     logging_steps = 1,
@@ -122,7 +122,7 @@ log.info("\n--- Initializing Knowledge Probe Callback ---")
 knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
     tokenizer=tokenizer,
     probe_dataset_path="../../data/MEDEX/knowledge_probes_10000.csv",
-    max_length=512, # Should match context_length
+    max_length=1024, # Should match context_length
     batch_size=16
 )
 
