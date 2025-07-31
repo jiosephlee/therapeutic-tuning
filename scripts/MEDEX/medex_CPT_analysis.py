@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-run_name = "Analysis on 49K Facts Qwen2.5-0.5B"
+run_name = "Analysis on 49K Facts Qwen0.5B"
 
 run = wandb.init(
     project="medex_continued_pretraining",
@@ -25,7 +25,7 @@ run = wandb.init(
     group="Analysis",
 )
 
-df = pd.read_csv("../../data/MEDEX/knowledge_probes_balanced_49558.csv")
+df = pd.read_csv("../../data/MEDEX/knowledge_probes_balanced_21656.csv")
 ds = Dataset.from_pandas(df)
 
 model_config = llm_configs.ModelConfig(
@@ -122,8 +122,8 @@ lima_training_config = llm_configs.TrainingConfig(
 log.info("\n--- Initializing Knowledge Probe Callback ---")
 knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
     tokenizer=tokenizer,
-    probe_dataset_path="../../data/MEDEX/knowledge_probes_balanced_49558.csv",
-    batch_size=8 
+    probe_dataset_path="../../data/MEDEX/knowledge_probes_balanced_21656.csv",
+    batch_size=4,
 )
 
 # === Run LIMA Fine-Tuning ===

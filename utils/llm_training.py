@@ -217,8 +217,8 @@ def fine_tune_on_text(
     dataset = Dataset.from_dict({"text": text_chunks})
     log.info(f"[{tag}] Created dataset with {len(text_chunks)} chunks (including the eos token)")
     
-    assert(train_cfg.gradient_accumulation_steps <= len(text_chunks))
-    log.info(f"[{tag}] Gradient_accumulation_steps ({train_cfg.gradient_accumulation_steps}) is less than {len(text_chunks)}")
+    assert(train_cfg.gradient_accumulation_steps * train_cfg.per_device_train_batch_size == len(text_chunks))
+    log.info(f"[{tag}] Gradient_accumulation_steps ({train_cfg.gradient_accumulation_steps}) * {train_cfg.per_device_train_batch_size} = {len(text_chunks)}")
     
     training_args = train_cfg.to_sft_training_args() 
     
@@ -442,8 +442,8 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
             
             # Calculate the end index and cap it at the actual sequence length for safety.
             end_idx = int(min(start_idx + target_lengths[i].item(), full_lengths[i].item())) # TODO: Hm is it right to cap by full_lengths? in index 0 case, we're maxing it at 41
-            print(start_idx)
-            print(end_idx)
+            # print(start_idx)
+            # print(end_idx)
             if start_idx < end_idx:
                 mask[i, start_idx:end_idx] = True
             
@@ -491,6 +491,13 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
                 context_lengths = tokenized_contexts['attention_mask'].sum(dim=1)
                 target_lengths = tokenized_targets['attention_mask'].sum(dim=1)
                 full_lengths = shift_attention_mask.sum(dim=1)
+                # print("Probe name: " + probe_name)
+                # print("Texts: ")
+                # print(batch_texts)
+                # print("Contexts: ")
+                # print(batch_contexts)
+                # print("Targets: ")
+                # print(batch_targets)
 
                 target_mask = self._get_target_mask(shift_labels, context_lengths, target_lengths, full_lengths)
 
@@ -498,10 +505,10 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
                     f"Probe '{probe_name}': Target mask and attention mask conflict."
 
                 final_mask = shift_attention_mask * target_mask.to(device)
-                print(shift_attention_mask)
-                print(loss_per_token)
-                print(shift_attention_mask.shape)
-                print(loss_per_token.shape)
+                #print(shift_attention_mask)
+                #print(loss_per_token)
+                #print(shift_attention_mask.shape)
+                #print(loss_per_token.shape)
                 masked_loss = loss_per_token * final_mask
                 
                 sum_loss = masked_loss.sum(dim=1)
