@@ -537,9 +537,9 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
                             batch_hits_at_5.append(0)
                             batch_hits_at_10.append(0)
                 
-                results_aggregator[probe_name]['hits_at_1'].append(torch.tensor(batch_hits_at_1, device=device))
-                results_aggregator[probe_name]['hits_at_5'].append(torch.tensor(batch_hits_at_5, device=device))
-                results_aggregator[probe_name]['hits_at_10'].append(torch.tensor(batch_hits_at_10, device=device))
+                    results_aggregator[probe_name]['hits_at_1'].append(torch.tensor(batch_hits_at_1, device=device))
+                    results_aggregator[probe_name]['hits_at_5'].append(torch.tensor(batch_hits_at_5, device=device))
+                    results_aggregator[probe_name]['hits_at_10'].append(torch.tensor(batch_hits_at_10, device=device))
         
         return self._aggregate_and_calculate_metrics(results_aggregator)
 
