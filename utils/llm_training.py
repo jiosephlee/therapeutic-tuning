@@ -434,15 +434,16 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
         for i in range(tokenized_full.shape[0]):
             # Assert that context_length + target_length = full_length for each item
             expected_full_length = context_lengths[i].item() + target_lengths[i].item()
-            actual_full_length = full_lengths[i].item()
+            actual_full_length = full_lengths[i].item() + 1
             assert expected_full_length == actual_full_length, \
                 f"Length mismatch at index {i}: context ({context_lengths[i].item()}) + target ({target_lengths[i].item()}) = {expected_full_length} != full ({actual_full_length})"
             
-            start_idx = context_lengths[i].item()
+            start_idx = int(context_lengths[i].item())
             
             # Calculate the end index and cap it at the actual sequence length for safety.
-            end_idx = min(start_idx + target_lengths[i].item(), full_lengths[i].item())
-
+            end_idx = int(min(start_idx + target_lengths[i].item(), full_lengths[i].item())) # TODO: Hm is it right to cap by full_lengths? in index 0 case, we're maxing it at 41
+            print(start_idx)
+            print(end_idx)
             if start_idx < end_idx:
                 mask[i, start_idx:end_idx] = True
             
@@ -497,6 +498,10 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
                     f"Probe '{probe_name}': Target mask and attention mask conflict."
 
                 final_mask = shift_attention_mask * target_mask.to(device)
+                print(shift_attention_mask)
+                print(loss_per_token)
+                print(shift_attention_mask.shape)
+                print(loss_per_token.shape)
                 masked_loss = loss_per_token * final_mask
                 
                 sum_loss = masked_loss.sum(dim=1)

@@ -17,7 +17,7 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-run_name = "Analysis on 49K Facts"
+run_name = "Analysis on 49K Facts Qwen2.5-0.5B"
 
 run = wandb.init(
     project="medex_continued_pretraining",
@@ -25,7 +25,7 @@ run = wandb.init(
     group="Analysis",
 )
 
-df = pd.read_csv("../../data/MEDEX/knowledge_probes_balanced_49635.csv")
+df = pd.read_csv("../../data/MEDEX/knowledge_probes_balanced_49558.csv")
 ds = Dataset.from_pandas(df)
 
 model_config = llm_configs.ModelConfig(
