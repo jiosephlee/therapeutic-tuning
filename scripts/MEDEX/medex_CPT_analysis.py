@@ -6,6 +6,8 @@ import utils.llm_training as llm_training
 import utils.llm_configs as llm_configs
 import wandb
 import logging
+from datasets import Dataset
+import pandas as pd
 
 # --- Basic Configuration ---
 logging.basicConfig(
@@ -15,18 +17,17 @@ logging.basicConfig(
 )
 log = logging.getLogger(__name__)
 
-run_name = "Analysis on 10K Facts"
+run_name = "Analysis on 49K Facts"
 
 run = wandb.init(
     project="medex_continued_pretraining",
     name=run_name,
     group="Analysis",
 )
-from datasets import load_dataset
 
-ds = load_dataset("medexanon/Medex", split="train[:1%]").select(range(10000))
+df = pd.read_csv("../../data/MEDEX/knowledge_probes_balanced_49635.csv")
+ds = Dataset.from_pandas(df)
 
-# === Cell 1: Configuration ===
 model_config = llm_configs.ModelConfig(
     id="Qwen/Qwen2.5-0.5B",
     peft=llm_configs.PeftConfig(
@@ -85,16 +86,16 @@ def concat_columns_and_explode(batch, tokenizer):
 
 # ---- apply to your Dataset ----
 # Creates a new 'text' column and explodes list items into new rows
-ds_with_text = ds.map(
-    concat_columns_and_explode,
-    fn_kwargs={"tokenizer": tokenizer},
-    remove_columns=ds.column_names, 
-    batched=True,
-    desc="Building and exploding text rows"
-)
+# ds_with_text = ds.map(
+#     concat_columns_and_explode,
+#     fn_kwargs={"tokenizer": tokenizer},
+#     remove_columns=ds.column_names, 
+#     batched=True,
+#     desc="Building and exploding text rows"
+# )
 
 # Shuffle the newly created dataset and then select only the 'text' column
-medex_ds = ds_with_text.shuffle(seed=42).select_columns(["text"])
+medex_ds = ds.shuffle(seed=42).select_columns(["text"])
 
 lima_training_config = llm_configs.TrainingConfig(
     run_name = run_name,
@@ -121,8 +122,8 @@ lima_training_config = llm_configs.TrainingConfig(
 log.info("\n--- Initializing Knowledge Probe Callback ---")
 knowledge_probe_callback = llm_training.MedexKnowledgeProbeCallback(
     tokenizer=tokenizer,
-    probe_dataset_path="../../data/MEDEX/knowledge_probes_10000.csv",
-    batch_size=16
+    probe_dataset_path="../../data/MEDEX/knowledge_probes_balanced_49558.csv",
+    batch_size=8 
 )
 
 # === Run LIMA Fine-Tuning ===
@@ -142,6 +143,9 @@ trainer = llm_training.sft_train_on_dataset(
 # === Plotting Results ===
 log.info("\n--- Generating Plots ---")
 output_plot_dir = f"results/plots/{lima_training_config.run_name}"
-knowledge_probe_callback.plot_average_perplexities(output_dir=output_plot_dir)
-knowledge_probe_callback.plot_perplexity_by_entity_frequency(output_dir=output_plot_dir)
+# knowledge_probe_callback.plot_average_perplexities(output_dir=output_plot_dir)
+# knowledge_probe_callback.plot_perplexity_by_entity_frequency(output_dir=output_plot_dir)
+knowledge_probe_callback.plot_delta_perplexity_comparison(output_dir=output_plot_dir)
+knowledge_probe_callback.plot_focused_delta_perplexity(output_dir=output_plot_dir)
+knowledge_probe_callback.plot_hits_at_k_for_fact_targets(output_dir=output_plot_dir)
 log.info(f"Plots saved to {output_plot_dir}")

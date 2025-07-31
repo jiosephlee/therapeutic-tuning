@@ -17,12 +17,16 @@ from transformers import (
     AutoTokenizer,
     BitsAndBytesConfig,
     TrainerCallback,
+    TrainingArguments,
+    TrainerState,
+    TrainerControl,
 )
 from liger_kernel.transformers import LigerCrossEntropyLoss
 from trl import SFTConfig, SFTTrainer
 from utils.llm_configs import PeftConfig, ModelConfig, TrainingConfig, InferenceConfig
 from tqdm import tqdm
 from sklearn.metrics import roc_auc_score, accuracy_score
+from typing import Dict, Any
 
 # --------------------------------------------------------------------------
 # SECTION 2: CORE LLM OPERATIONS
@@ -322,12 +326,14 @@ def save_model(model, tokenizer, log, save_path: str):
 
 class MedexKnowledgeProbeCallback(TrainerCallback):
     """
-    A callback designed for the MEDEX dataset to evaluate perplexity on specific
-    knowledge probes from a CSV file. It calculates perplexity for 'entity', 
-    'text', and 'fact' columns, including "probe" versions for text and fact 
-    that exclude initial words. It also provides plotting functionalities.
+    A callback designed for the MEDEX dataset to evaluate perplexity and log probability
+    on specific knowledge probes. It tracks metrics and their deltas from a pre-training baseline.
+
+    It performs two forward passes to measure performance with different contexts:
+    1. Full context (Entity, SMILES, Fact)
+    2. Minimal context (Entity, Fact)
     """
-    def __init__(self, tokenizer: AutoTokenizer, probe_dataset_path: str, batch_size: int = 8, log_prefix="medex_probe_ppl"):
+    def __init__(self, tokenizer: AutoTokenizer, probe_dataset_path: str, batch_size: int = 8, log_prefix="medex_probe"):
         self.tokenizer = tokenizer
         self.log_prefix = log_prefix
         self.batch_size = batch_size
@@ -336,21 +342,30 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
             self.tokenizer.pad_token = self.tokenizer.eos_token
 
         df = pd.read_csv(probe_dataset_path)
-        # Only store text and fact for perplexity calculation
+
+        # Prepare all probe text variations and contexts.
+        # The `.get(c, pd.Series(index=df.index, dtype=object).fillna(""))` provides a fallback for missing columns.
         self.probes = {
             "text": df["text"].tolist(),
             "fact": df["fact"].tolist(),
+            "fact_target": df["fact_target"].tolist(),
+            "full_context_probe": df["full_context_probe"].tolist(),
+            "minimal_context_probe": df["minimal_context_probe"].tolist(),
+            "full_context": df.get("full_context").tolist(),
+            "minimal_text": df.get("minimal_text").tolist(),
+            "minimal_context": df.get("minimal_context").tolist(),
+            "empty_context": [""] * len(df)
         }
         self.probe_indices = df.index.tolist()
 
         # Dynamically determine max_length from the longest probe text
+        all_probe_texts = self.probes['text'] 
         max_len = 0
-        all_probe_texts = self.probes['text'] + self.probes['fact']
         for text in all_probe_texts:
             token_len = len(self.tokenizer(str(text), add_special_tokens=False)['input_ids'])
             if token_len > max_len:
                 max_len = token_len
-        
+
         # Set max_length to the calculated value, padding to a multiple of 8 for performance.
         self.max_length = (max_len + 7) // 8 * 8
         print(f"INFO: MedexKnowledgeProbeCallback dynamically set max_length to {self.max_length}")
@@ -364,106 +379,241 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
         self.entity_freq_buckets = pd.cut(self.entity_freq_map, bins=bins, labels=labels, right=True)
 
         self.history = []
+        self.baseline_metrics = {}
 
-        # Pre-calculate context token lengths for "probe" PPL
-        self.context_token_lengths = {"text": [], "fact": []}
-        for col in self.probes.keys(): # Will be ["text", "fact"]
-            for statement in self.probes[col]:
-                words = str(statement).split()
-                # Determine number of words to use as context
-                context_word_count = 5 if len(words) < 20 else 10
-                context_part = " ".join(words[:context_word_count])
-                num_tokens = len(self.tokenizer(context_part, add_special_tokens=False)['input_ids'])
-                self.context_token_lengths[col].append(num_tokens)
-
-    def on_step_end(self, args, state, control, model, **kwargs):
-        model.eval()
-        device = model.device
-
-        step_results = {'step': state.global_step}
-        log_data = {}
-
-        probe_cols = ["text", "fact"] # Only calculate PPL for these columns
-        for col in probe_cols:
-            all_perplexities = []
-            all_probe_perplexities = []
-            
-            # Process probes in mini-batches to conserve GPU memory
-            for i in range(0, len(self.probes[col]), self.batch_size):
-                batch_texts = [str(t) for t in self.probes[col][i:i + self.batch_size]]
-                
-                if not batch_texts:
-                    continue
-
-                inputs = self.tokenizer(
-                    batch_texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length
-                ).to(device)
-
-                input_ids = inputs["input_ids"]
-                attention_mask = inputs["attention_mask"]
-
-                with torch.no_grad():
-                    outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=input_ids)
-                    logits = outputs.logits
-
-                shift_logits = logits[..., :-1, :].contiguous()
-                shift_labels = input_ids[..., 1:].contiguous()
-                shift_attention_mask = attention_mask[..., 1:].contiguous()
-
-                loss_fct = LigerCrossEntropyLoss(reduction='none')
-                loss_per_token = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-                loss_per_token = loss_per_token.view(input_ids.size(0), -1)
-
-                # --- Whole Statement Perplexity ---
-                whole_masked_loss = loss_per_token * shift_attention_mask
-                whole_sum_loss = whole_masked_loss.sum(dim=1)
-                whole_num_tokens = shift_attention_mask.sum(dim=1)
-                
-                whole_mean_loss = torch.zeros_like(whole_sum_loss, dtype=torch.float32)
-                valid_indices_whole = torch.where(whole_num_tokens > 0)[0]
-                if len(valid_indices_whole) > 0:
-                    whole_mean_loss[valid_indices_whole] = whole_sum_loss[valid_indices_whole] / whole_num_tokens[valid_indices_whole]
-                
-                perplexities = torch.exp(whole_mean_loss)
-                all_perplexities.append(perplexities)
-
-                # --- "Probe" Perplexity ---
-                batch_context_lengths = self.context_token_lengths[col][i:i + self.batch_size]
-                target_mask = torch.zeros_like(shift_labels, dtype=torch.float)
-                for j in range(len(batch_texts)):
-                    start_idx = max(0, batch_context_lengths[j])
-                    target_mask[j, start_idx:] = 1
-
-                probe_final_mask = shift_attention_mask * target_mask
-                probe_masked_loss = loss_per_token * probe_final_mask
-                probe_sum_loss = probe_masked_loss.sum(dim=1)
-                probe_num_tokens = probe_final_mask.sum(dim=1)
-
-                probe_mean_loss = torch.zeros_like(probe_sum_loss, dtype=torch.float32)
-                valid_indices_probe = torch.where(probe_num_tokens > 0)[0]
-                if len(valid_indices_probe) > 0:
-                    probe_mean_loss[valid_indices_probe] = probe_sum_loss[valid_indices_probe] / probe_num_tokens[valid_indices_probe]
-
-                probe_perplexities = torch.exp(probe_mean_loss)
-                all_probe_perplexities.append(probe_perplexities)
-
-            # Consolidate and log results for the column
-            final_perplexities = torch.cat(all_perplexities)
-            step_results[f'{col}_perplexity'] = final_perplexities.cpu().tolist()
-            log_data[f"{self.log_prefix}/{col}_avg_ppl"] = final_perplexities[~torch.isinf(final_perplexities)].mean().item()
-
-            final_probe_perplexities = torch.cat(all_probe_perplexities)
-            step_results[f'{col}_probe_perplexity'] = final_probe_perplexities.cpu().tolist()
-            log_data[f"{self.log_prefix}/{col}_probe_avg_ppl"] = final_probe_perplexities[~torch.isinf(final_probe_perplexities)].mean().item()
-
-        self.history.append(step_results)
+    def on_train_begin(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model, **kwargs):
+        print("MedexKnowledgeProbeCallback: Calculating baseline metrics before training...")
+        self.baseline_metrics = self._evaluate_probes(model)
+        print("MedexKnowledgeProbeCallback: Baseline metrics calculation complete.")
+        # Log baseline metrics to wandb if desired
+        log_data = {f"{self.log_prefix}/{k}": v for k, v in self.baseline_metrics.items() if "avg" in k}
         if state.is_world_process_zero:
-            wandb.log(log_data, step=state.global_step)
+            wandb.log(log_data, step=0)
 
-        model.train()
+    def on_step_end(self, args: TrainingArguments, state: TrainerState, control: TrainerControl, model, **kwargs):
+        step_metrics = self._evaluate_probes(model)
+
+        # Calculate deltas and prepare for logging
+        log_data = {}
+        results_with_deltas = {}
+        # Use the keys from the step_metrics to ensure alignment
+        for key in step_metrics.keys():
+             if not isinstance(step_metrics[key], list): # Skip non-list items like '..._avg_...'
+                 continue
+             
+             step_value_list = step_metrics[key]
+             baseline_value_list = self.baseline_metrics.get(key, [0] * len(step_value_list))
+             
+             # Store the raw metric
+             results_with_deltas[key] = step_value_list
+             
+             # Calculate and store the delta
+             delta_list = [s - b for s, b in zip(step_value_list, baseline_value_list)]
+             delta_key = f"{key}_delta"
+             results_with_deltas[delta_key] = delta_list
+
+        step_results = {'step': state.global_step, **results_with_deltas}
+        self.history.append(step_results)
+
+        # Log average metrics to wandb
+        avg_log_data = {}
+        for key, value in step_metrics.items():
+            if "avg" in key:
+                baseline_value = self.baseline_metrics.get(key, 0)
+                delta = value - baseline_value
+                avg_log_data[f"{self.log_prefix}/{key}"] = value
+                avg_log_data[f"{self.log_prefix}/{key}_delta"] = delta
+
+        if state.is_world_process_zero:
+            wandb.log(avg_log_data, step=state.global_step)
+
+    def _get_target_mask(self, tokenized_full, context_lengths, target_lengths, full_lengths):
+        """Identifies the token positions of the target sequence within the full sequence."""
+        mask = torch.zeros_like(tokenized_full, dtype=torch.bool)
+
+        for i in range(tokenized_full.shape[0]):
+            # Assert that context_length + target_length = full_length for each item
+            expected_full_length = context_lengths[i].item() + target_lengths[i].item()
+            actual_full_length = full_lengths[i].item()
+            assert expected_full_length == actual_full_length, \
+                f"Length mismatch at index {i}: context ({context_lengths[i].item()}) + target ({target_lengths[i].item()}) = {expected_full_length} != full ({actual_full_length})"
+            
+            start_idx = context_lengths[i].item()
+            
+            # Calculate the end index and cap it at the actual sequence length for safety.
+            end_idx = min(start_idx + target_lengths[i].item(), full_lengths[i].item())
+
+            if start_idx < end_idx:
+                mask[i, start_idx:end_idx] = True
+            
+        return mask
+
+    def _run_pass_and_get_metrics(self, model, full_text_key: str, probes_config: Dict[str, Dict[str, str]]):
+        device = model.device
+        full_texts_list = self.probes[full_text_key]
+        
+        results_aggregator = {
+            probe_name: {'losses': [], 'counts': [], 'hits_at_1': [], 'hits_at_5': [], 'hits_at_10': []}
+            for probe_name in probes_config.keys()
+        }
+
+        for i in range(0, len(full_texts_list), self.batch_size):
+            batch_texts = [str(t) for t in full_texts_list[i:i + self.batch_size]]
+            if not batch_texts: continue
+
+            inputs = self.tokenizer(batch_texts, return_tensors="pt", padding=True, truncation=True, max_length=self.max_length).to(device)
+            input_ids = inputs["input_ids"]
+            attention_mask = inputs["attention_mask"]
+
+            with torch.no_grad():
+                outputs = model(input_ids=input_ids, attention_mask=attention_mask, labels=input_ids)
+                logits = outputs.logits
+            
+            shift_logits = logits[..., :-1, :].contiguous()
+            shift_labels = input_ids[..., 1:].contiguous()
+            shift_attention_mask = attention_mask[..., 1:].contiguous()
+
+            loss_fct = LigerCrossEntropyLoss(reduction='none')
+            loss_per_token = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+            loss_per_token = loss_per_token.view(input_ids.size(0), -1)
+
+            for probe_name, config in probes_config.items():
+                context_key = config["context_key"]
+                target_key = config["target_key"]
+
+                batch_contexts = [str(c) for c in self.probes[context_key][i:i + self.batch_size]]
+                batch_targets = [str(t) for t in self.probes[target_key][i:i + self.batch_size]]
+
+                tokenized_contexts = self.tokenizer(batch_contexts, return_tensors="pt", padding=True, add_special_tokens=False)
+                tokenized_targets = self.tokenizer(batch_targets, return_tensors="pt", padding=True, add_special_tokens=False)
+
+                context_lengths = tokenized_contexts['attention_mask'].sum(dim=1)
+                target_lengths = tokenized_targets['attention_mask'].sum(dim=1)
+                full_lengths = shift_attention_mask.sum(dim=1)
+
+                target_mask = self._get_target_mask(shift_labels, context_lengths, target_lengths, full_lengths)
+
+                assert not (target_mask.to(device) & (shift_attention_mask == 0)).any(), \
+                    f"Probe '{probe_name}': Target mask and attention mask conflict."
+
+                final_mask = shift_attention_mask * target_mask.to(device)
+                masked_loss = loss_per_token * final_mask
+                
+                sum_loss = masked_loss.sum(dim=1)
+                num_tokens = final_mask.sum(dim=1)
+                
+                results_aggregator[probe_name]['losses'].append(sum_loss)
+                results_aggregator[probe_name]['counts'].append(num_tokens)
+
+                # --- Hits @ k calculation (only for specific target probes) ---
+                if config["target_key"] == "fact_target":
+                    batch_hits_at_1, batch_hits_at_5, batch_hits_at_10 = [], [], []
+                    for j in range(shift_labels.shape[0]): # Iterate over items in the batch
+                        if target_lengths[j].item() > 0:
+                            start_pos = context_lengths[j].item()
+                            
+                            # Ensure start_pos is a valid index within the possibly truncated sequence
+                            if start_pos < full_lengths[j]:
+                                actual_token_id = shift_labels[j, start_pos]
+                                logits_slice = shift_logits[j, start_pos, :]
+                                top_10_indices = torch.topk(logits_slice, 10).indices
+
+                                batch_hits_at_1.append(1 if actual_token_id == top_10_indices[0] else 0)
+                                batch_hits_at_5.append(1 if actual_token_id in top_10_indices[:5] else 0)
+                                batch_hits_at_10.append(1 if actual_token_id in top_10_indices else 0)
+                            else:
+                                # This case can occur if truncation removes the target's first token.
+                                batch_hits_at_1.append(0)
+                                batch_hits_at_5.append(0)
+                                batch_hits_at_10.append(0)
+                        else:
+                            # No target tokens, so no hit is possible.
+                            batch_hits_at_1.append(0)
+                            batch_hits_at_5.append(0)
+                            batch_hits_at_10.append(0)
+                
+                results_aggregator[probe_name]['hits_at_1'].append(torch.tensor(batch_hits_at_1, device=device))
+                results_aggregator[probe_name]['hits_at_5'].append(torch.tensor(batch_hits_at_5, device=device))
+                results_aggregator[probe_name]['hits_at_10'].append(torch.tensor(batch_hits_at_10, device=device))
+        
+        return self._aggregate_and_calculate_metrics(results_aggregator)
+
+    def _aggregate_and_calculate_metrics(self, results_aggregator: Dict) -> Dict:
+        """Aggregates batch results and computes final metrics for perplexity, log_prob, and hits@k."""
+        final_metrics = {}
+        for probe_name, data in results_aggregator.items():
+            # --- Perplexity and Log Probability (calculated for all probes) ---
+            total_loss = torch.cat(data['losses'])
+            total_tokens = torch.cat(data['counts'])
+            
+            probe_metrics = self._calculate_perplexity_metrics(total_loss, total_tokens)
+            for metric_name, value in probe_metrics.items():
+                final_metrics[f"{probe_name}_{metric_name}"] = value
+
+            # --- Hits @ k (calculated only if data was collected) ---
+            if data['hits_at_1']:
+                for k in [1, 5, 10]:
+                    hits_key = f'hits_at_{k}'
+                    all_hits = torch.cat(data[hits_key])
+                    final_metrics[f"{probe_name}_{hits_key}"] = all_hits.cpu().tolist()
+                    
+                    avg_hits = all_hits.float().mean().item()
+                    final_metrics[f"{probe_name}_avg_{hits_key}"] = avg_hits
+            
+        return final_metrics
+
+    def _calculate_perplexity_metrics(self, total_loss: torch.Tensor, total_tokens: torch.Tensor) -> Dict[str, Any]:
+        """Calculates perplexity, log probability, and their averages from loss and token counts."""
+        metrics = {}
+        
+        # Note: Direct division can result in NaN/Inf if total_tokens contains zeros.
+        # This is intentional to make data or tokenization issues apparent.
+        mean_loss = total_loss / total_tokens
+
+        perplexity = torch.exp(mean_loss)
+        
+        metrics["perplexity"] = perplexity.cpu().tolist()
+        metrics["log_prob"] = mean_loss.cpu().tolist()
+        
+        # For averages, we still filter out NaN/Inf to get a meaningful summary of valid probes.
+        valid_perplexity = perplexity[~torch.isinf(perplexity) & ~torch.isnan(perplexity)]
+        valid_log_prob = mean_loss[~torch.isinf(mean_loss) & ~torch.isnan(mean_loss)]
+        
+        metrics["avg_perplexity"] = valid_perplexity.mean().item() if len(valid_perplexity) > 0 else 0.0
+        metrics["avg_log_prob"] = valid_log_prob.mean().item() if len(valid_log_prob) > 0 else 0.0
+        
+        return metrics
+
+    def _evaluate_probes(self, model):
+        was_training = model.training
+        model.eval()
+        all_metrics = {}
+
+        # --- Pass 1: Full Context ---
+        full_context_probes_config = {
+            "text": {"context_key": "empty_context", "target_key": "text"},
+            "fact_given_full_context": {"context_key": "full_context", "target_key": "fact"},
+            "fact_target_given_full_context_probe": {"context_key": "full_context_probe", "target_key": "fact_target"}
+        }
+        metrics_pass_1 = self._run_pass_and_get_metrics(model, "text", full_context_probes_config)
+        all_metrics.update(metrics_pass_1)
+
+        # --- Pass 2: Minimal Context ---
+        minimal_context_probes_config = {
+            "fact_given_minimal_context": {"context_key": "minimal_context", "target_key": "fact"},
+            "fact_target_given_minimal_context_probe": {"context_key": "minimal_context_probe", "target_key": "fact_target"}
+        }
+        metrics_pass_2 = self._run_pass_and_get_metrics(model, "minimal_text", minimal_context_probes_config)
+        all_metrics.update(metrics_pass_2)
+
+        if was_training:
+            model.train()
+        return all_metrics
 
     def get_results_dataframe(self):
         records = []
+        all_metrics = set()
+        
         for entry in self.history:
             step = entry['step']
             num_probes = len(self.probe_indices)
@@ -473,25 +623,32 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
                     'probe_index': self.probe_indices[i],
                     'entity_freq_bucket': self.entity_freq_buckets[i],
                 }
-                for col in ["text", "fact"]:
-                    record[f'{col}_perplexity'] = entry[f'{col}_perplexity'][i]
-                    record[f'{col}_probe_perplexity'] = entry[f'{col}_probe_perplexity'][i]
+                # Dynamically add all available per-probe metrics from the history entry.
+                # This is robust to metrics that are not calculated for every probe type.
+                for key, value in entry.items():
+                    if isinstance(value, list) and i < len(value):
+                        record[key] = value[i]
+                        all_metrics.add(key)
                 records.append(record)
+        
+        print(f"Tracked metrics: {sorted(all_metrics)}")
         return pd.DataFrame(records)
 
     def plot_average_perplexities(self, output_dir="."):
         df = self.get_results_dataframe()
         avg_df = df.groupby('step').mean(numeric_only=True)
 
-        plt.figure(figsize=(12, 8))
-        metrics_to_plot = ['text_perplexity', 'text_probe_perplexity', 'fact_perplexity', 'fact_probe_perplexity']
+        # Select perplexity columns to plot
+        metrics_to_plot = [col for col in avg_df.columns if 'perplexity' in col and 'delta' not in col]
+
+        plt.figure(figsize=(15, 10))
         for metric in metrics_to_plot:
             plt.plot(avg_df.index, avg_df[metric], label=metric)
-        
+
         plt.title('Average Perplexity Over Training Steps')
         plt.xlabel('Training Step')
         plt.ylabel('Perplexity')
-        plt.legend()
+        plt.legend(bbox_to_anchor=(1.05, 1), loc='upper left')
         plt.grid(True)
         plt.tight_layout()
         os.makedirs(output_dir, exist_ok=True)
@@ -501,13 +658,27 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
     def plot_perplexity_by_entity_frequency(self, output_dir="."):
         df = self.get_results_dataframe()
         
-        for probe_type in ['text_probe_perplexity', 'fact_probe_perplexity']:
-            grouped_df = df.groupby(['entity_freq_bucket', 'step'])[probe_type].mean().reset_index()
+        plot_metrics = [
+            'fact_target_given_full_context_probe_perplexity',
+            'fact_target_given_minimal_context_probe_perplexity'
+        ]
+
+        for probe_type in plot_metrics:
+            # Need to handle potential CategoricalDtype for groupby
+            if pd.api.types.is_categorical_dtype(df['entity_freq_bucket']):
+                df['entity_freq_bucket'] = df['entity_freq_bucket'].astype(str)
             
+            grouped_df = df.groupby(['entity_freq_bucket', 'step'])[probe_type].mean().reset_index()
+
             plt.figure(figsize=(14, 9))
+            # Sort buckets for consistent plotting order
+            sorter = ['1-5', '6-10', '11-20', '21-30', '31-40', '41-50', '51-100', '100+']
+            grouped_df.entity_freq_bucket = pd.Categorical(grouped_df.entity_freq_bucket, categories=sorter, ordered=True)
+            grouped_df = grouped_df.sort_values('entity_freq_bucket')
+
             for bucket, data in grouped_df.groupby('entity_freq_bucket'):
                 plt.plot(data['step'], data[probe_type], label=f'Freq: {bucket}')
-                
+
             plt.title(f'{probe_type.replace("_", " ").title()} by Entity Frequency')
             plt.xlabel('Training Step')
             plt.ylabel('Average Perplexity')
@@ -517,6 +688,155 @@ class MedexKnowledgeProbeCallback(TrainerCallback):
             os.makedirs(output_dir, exist_ok=True)
             plt.savefig(os.path.join(output_dir, f"{probe_type}_by_entity_frequency.png"))
             plt.close()
+
+    def plot_delta_perplexity_comparison(self, output_dir="."):
+        """
+        Plots a comparison of delta perplexities for various probe configurations.
+        - 'text' perplexity is a solid line.
+        - 'fact' perplexities are dotted lines.
+        - 'fact_target' perplexities are dashed lines.
+        """
+        df = self.get_results_dataframe()
+        avg_df = df.groupby('step').mean(numeric_only=True)
+
+        plt.figure(figsize=(15, 10))
+
+        metrics_to_plot = {
+            'text_perplexity_delta': {'label': 'Text (Overall)', 'linestyle': '-'},
+            'fact_given_full_context_perplexity_delta': {'label': 'Fact (Full Context)', 'linestyle': ':'},
+            'fact_target_given_full_context_probe_perplexity_delta': {'label': 'Fact Target (Full Context)', 'linestyle': '--'},
+            'fact_given_minimal_context_perplexity_delta': {'label': 'Fact (Minimal Context)', 'linestyle': ':'},
+            'fact_target_given_minimal_context_probe_perplexity_delta': {'label': 'Fact Target (Minimal Context)', 'linestyle': '--'},
+        }
+
+        for metric, style in metrics_to_plot.items():
+            if metric in avg_df.columns:
+                plt.plot(avg_df.index, avg_df[metric], label=style['label'], linestyle=style['linestyle'])
+
+        plt.title('Average Delta Perplexity Over Training Steps')
+        plt.xlabel('Training Step')
+        plt.ylabel('Delta Perplexity (vs. Baseline)')
+        plt.legend(title="Probe Type")
+        plt.grid(True)
+        plt.tight_layout()
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, "delta_perplexity_comparison.png"))
+        plt.close()
+
+    def plot_focused_delta_perplexity(self, output_dir="."):
+        """
+        Plots a focused comparison of delta perplexities for the 'fact_target' probes,
+        including standard deviation as a shaded area.
+        """
+        df = self.get_results_dataframe()
+        
+        metrics_to_plot = {
+            'fact_target_given_full_context_probe_perplexity_delta': {'label': 'Fact Target (Full Context)', 'linestyle': '--'},
+            'fact_target_given_minimal_context_probe_perplexity_delta': {'label': 'Fact Target (Minimal Context)', 'linestyle': '--'},
+        }
+
+        cols_to_agg = list(metrics_to_plot.keys())
+        stats_df = df.groupby('step')[cols_to_agg].agg(['mean', 'std'])
+
+        plt.figure(figsize=(15, 10))
+
+        for metric, style in metrics_to_plot.items():
+            if (metric, 'mean') in stats_df.columns:
+                mean = stats_df[(metric, 'mean')]
+                std = stats_df[(metric, 'std')].fillna(0)
+                plt.plot(stats_df.index, mean, label=style['label'], linestyle=style['linestyle'])
+                plt.fill_between(stats_df.index, mean - std, mean + std, alpha=0.2)
+
+        plt.title('Fact Target Delta Perplexity: Full vs. Minimal Context')
+        plt.xlabel('Training Step')
+        plt.ylabel('Delta Perplexity (vs. Baseline)')
+        plt.legend(title="Probe Type")
+        plt.grid(True)
+        plt.tight_layout()
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, "focused_delta_perplexity_with_std.png"))
+        plt.close()
+
+    def plot_hits_at_k_for_fact_targets(self, output_dir="."):
+        """
+        Plots Hits@1, Hits@5, and Hits@10 for the full-context fact target probe.
+        """
+        df = self.get_results_dataframe()
+        avg_df = df.groupby('step').mean(numeric_only=True)
+
+        plt.figure(figsize=(15, 10))
+
+        metrics_to_plot = {
+            'fact_target_given_full_context_probe_hits_at_1': {'label': 'Hits@1'},
+            'fact_target_given_full_context_probe_hits_at_5': {'label': 'Hits@5'},
+            'fact_target_given_full_context_probe_hits_at_10': {'label': 'Hits@10'},
+        }
+
+        for metric, style in metrics_to_plot.items():
+            if metric in avg_df.columns:
+                plt.plot(avg_df.index, avg_df[metric], label=style['label'])
+
+        plt.title('Average Hits@k for Fact Targets (Full Context)')
+        plt.xlabel('Training Step')
+        plt.ylabel('Hit Rate')
+        plt.legend(title="Metric")
+        plt.grid(True)
+        plt.tight_layout()
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, "hits_at_k_fact_targets.png"))
+        plt.close()
+
+    def plot_final_perplexity_by_bucket(self, output_dir="."):
+        """
+        Plots the average final delta perplexity for fact target probes,
+        grouped by entity frequency bucket, with standard deviation shadows.
+        """
+        df = self.get_results_dataframe()
+        if df.empty or 'step' not in df.columns:
+            print("INFO: Cannot generate final perplexity plot, dataframe is empty or missing 'step' column.")
+            return
+
+        last_step = df['step'].max()
+        df_last_step = df[df['step'] == last_step].copy()
+
+        plt.figure(figsize=(14, 9))
+        
+        metrics_to_plot = {
+            'fact_target_given_full_context_probe_perplexity_delta': 'Full Context',
+            'fact_target_given_minimal_context_probe_perplexity_delta': 'Minimal Context'
+        }
+
+        if pd.api.types.is_categorical_dtype(df_last_step['entity_freq_bucket']):
+            df_last_step['entity_freq_bucket'] = df_last_step['entity_freq_bucket'].astype(str)
+
+        for metric, label in metrics_to_plot.items():
+            if metric not in df_last_step.columns:
+                continue
+
+            bucket_stats = df_last_step.groupby('entity_freq_bucket')[metric].agg(['mean', 'std']).reset_index()
+
+            sorter = ['1-5', '6-10', '11-20', '21-30', '31-40', '41-50', '51-100', '100+']
+            bucket_stats['entity_freq_bucket'] = pd.Categorical(bucket_stats['entity_freq_bucket'], categories=sorter, ordered=True)
+            bucket_stats = bucket_stats.sort_values('entity_freq_bucket')
+            bucket_stats['std'] = bucket_stats['std'].fillna(0)
+
+            x_axis = bucket_stats['entity_freq_bucket'].astype(str)
+            mean = bucket_stats['mean']
+            std = bucket_stats['std']
+
+            plt.plot(x_axis, mean, label=label)
+            plt.fill_between(x_axis, mean - std, mean + std, alpha=0.2)
+        
+        plt.title('Final Delta Perplexity of Fact Targets by Entity Frequency')
+        plt.xlabel('Entity Frequency Bucket')
+        plt.ylabel('Average Delta Perplexity at Final Step')
+        plt.legend(title="Context Type")
+        plt.grid(True)
+        plt.tight_layout()
+        plt.xticks(rotation=45)
+        os.makedirs(output_dir, exist_ok=True)
+        plt.savefig(os.path.join(output_dir, "final_delta_perplexity_by_bucket.png"))
+        plt.close()
 
 
 class TrainingLossPerplexityCallback(TrainerCallback):
